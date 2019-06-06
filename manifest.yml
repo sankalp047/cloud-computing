@@ -1,5 +1,5 @@
 ---
 applications:
- - name: Assignemt1
+ - name: assignemt1
    random-route: true
    memory: 128M

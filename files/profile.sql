@@ -9,13 +9,13 @@ create table profile (
 );
 
 insert into profile(id, name, salary, room, keywords, telnum, picture)
-values (1, 'Abhishek', 100000, 550, 'Abhishek is almost done and very smart', 20202020, 'https://cdn3.iconfinder.com/data/icons/social-messaging-productivity-6/128/profile-male-circle2-512.png');
+values (1, 'Abhishek', 100000, 550, 'Abhishek is almost done and very smart', 20202020, 'ab.jpg');
 
 insert into profile(id, name, salary, room, keywords, picture)
-values (2, 'Jees', 99099, 420, 'Jees is too', 'https://cdn3.iconfinder.com/data/icons/social-messaging-productivity-6/128/profile-male-circle2-512.png');
+values (2, 'Jees', 99099, 420, 'Jees is too', 'jees.jpg');
 
 insert into profile(id, name, salary, keywords, telnum, picture)
-values (3, 'Jason', 99901, 'Is smart and hard working', 1000011, 'https://cdn3.iconfinder.com/data/icons/social-messaging-productivity-6/128/profile-male-circle2-512.png');
+values (3, 'Jason', 99901, 'Is smart and hard working', 1000011, 'jason.jpg');
 
 insert into profile(id, name, salary, room, keywords, telnum)
 values (4, 'Dave', 1, 525, 'Does not seem too nice', 0);
