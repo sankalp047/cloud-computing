@@ -33,7 +33,7 @@ pip install -r requirements.txt
 
 Run the app.
   ```
-python hello.py
+python server.py
   ```
 
  View your app at: http://localhost:8000
@@ -126,7 +126,7 @@ We're now going to update your local code to point to this database. We'll creat
 
 4. Run your application locally.
   ```
-python hello.py
+python server.py
   ```
 
   View your app at: http://localhost:8000. Any names you enter into the app will now get added to the database.
