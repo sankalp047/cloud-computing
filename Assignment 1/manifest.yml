@@ -1,5 +1,5 @@
 ---
 applications:
- - name: assignemt1
+ - name: nxv-Assignment1
    random-route: true
    memory: 128M
