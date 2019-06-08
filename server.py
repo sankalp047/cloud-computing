@@ -1,27 +1,20 @@
-from cloudant import Cloudant
 from flask import Flask, render_template, request, jsonify
 import atexit
 import os
 import json
 import ibm_db
 import ibm_boto3
+import sys
 from ibm_botocore.client import Config, ClientError
 from datetime import datetime
 
-def create_app():
-    app = Flask(__name__, static_url_path='')
-
-    with app.app_context():
-        print(app.name)
-
-    return app
-
-app = create_app()
+app = Flask(__name__, static_url_path='')
+        
+port = int(os.getenv('PORT', 8000))
 
 if os.path.isfile('vcap-local.json'):
     with open('vcap-local.json') as f:
         vcap = json.load(f)
-        print('Found local VCAP_SERVICES')
         creds = vcap['services']['db2'][0]['credentials']
         storage_details = vcap['services']['storage'][0]['details']
         conn_str = 'DATABASE='+creds['database']+';HOSTNAME='+creds['host']+';PORT='+str(creds['port'])+';PROTOCOL='+creds['protocol']+';UID='+creds['username']+';PWD='+creds['password']
@@ -40,13 +33,11 @@ if os.path.isfile('vcap-local.json'):
             endpoint_url=COS_ENDPOINT
         )
         
-port = int(os.getenv('PORT', 8000))
-
 ######################### Views  #########################
 
 def dispProfileView(profiles):
     html = '<html> <body> <a href = "/"> Back </a> <br /> <br /> '
-    if len(profiles) == 0:
+    if not profiles:
         html += '<h3> So search creteria met </h3> </body> </html> '
     else:
         html += '<table> <tr> <th> ID </th> <th> </th> <th> Name </th> <th> Salary </th> <th> Room </th> <th> Keywords </th> <th> Telnum </th> <th> </th> <th> </th> </tr>'
@@ -135,6 +126,8 @@ def searchProfiles(name, salary_min, salary_max, telnum, room):
                 result = ibm_db.fetch_assoc(statement)
             ibm_db.close(db2conn)
             return rows
+        else:
+            return False
     except:
         print("Connection to Database failed")
         return False
@@ -160,6 +153,8 @@ def updateProfile(id_, name, salary, keywords, telnum, room, picture):
             result = ibm_db.execute(statement)
             ibm_db.close(db2conn)
             return result
+        else:
+            return False
     except:
         print("Connection to Database failed")
         return False
@@ -173,6 +168,8 @@ def deleteProfile(id_):
             result = ibm_db.execute(statement)
             ibm_db.close(db2conn)
             return result
+        else:
+            return False
     except:
         print("Connection to Database failed")
         return False
@@ -220,8 +217,8 @@ def uploadImage():
         return dispUpdateView(False)
     file_ = request.files['file']
     if file_.filename == '':
-            flash('No selected file')
-            return dispUpdateView(False)
+        flash('No selected file')
+        return dispUpdateView(False)
     if file_:
         now = datetime.now()
         date_time = now.strftime('%Y-%m-%dT%H-%M-%SZ')
@@ -235,7 +232,7 @@ def uploadImage():
 
 @atexit.register
 def shutdown():
-    return app.send_static_file('index.html') 
+    print("Shutiing down")
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=port, debug=True)
