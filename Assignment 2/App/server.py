@@ -3,6 +3,7 @@ import ibm_db
 import atexit
 import os
 import json
+import csv
 
 app = Flask(__name__, static_url_path='')
 
@@ -143,16 +144,30 @@ def constructUpdateQuery(data):
     else:
         html = ' <p> Failed </p> <br /> '
     return html
-     
+
+def startDataUplaod(append, csvFileName):
+    # if not append:
+    #     q = "DELETE FROM EARTHQUAKES WHERE 1"
+    #     result = query(q)
+    #     if not result:
+    #         return False
+    with open ('Files/'+csvFileName, 'r') as f:
+        reader = csv.reader(f)
+        columns = next(reader) 
+        q = 'insert into MyTable({0}) values ({1})'
+        print(q)
+        return True
+
 header_html = '<html> <head> <title> Assignment 2 </title> </head> <body> <h2> <center> Assignment 2 </center> </h2>'
 footer_html = '<br /> <h4> By: Naman Jain Vimal Kumar <h4> </body> </html>'
 
 main_html = ('<table> <tr> <th> Uplaod Excel for Earth Quakes </th> <td> <form method="POST" enctype="multipart/form-data" action="/api/dataUpload"> '
-    +'<input type="file" id="file" name="file"> <br />'
+    +'<input type="file" id="file" name="file" id="file" required> <br />'
     +'<input type="radio" name="append" value="True"> Append <input type="radio" name="append" value="False" checked> New Data <br />' 
     +'<input type="submit"> </form> </td> </tr>'
-    +'<tr> <th> Query </th> <td> <form action="/api/query" method="GET"> <input type="text" name="query" id="query" required> <input type="submit"> </form>'
-    +'<td> </td> </table> ')
+    +'<tr> <th> Query </th> <td> <form action="/api/query" method="GET"> <input type="text" name="query" id="query" required> <input type="submit"> </form> </td> <tr />'
+    +'<tr> <th> EarthQuakes more than Magnitude 5.0 </th> <td> <form action = "/api/magnitude?mag=5.0" method="GET"> <input type = "submit"> </form> </td>  <tr />'
+    +'<tr> <th> EarthQuakes in groups of magnitude </th> <td> <form action = "/api/dateRange" method="GET"> <input type="date" name="from_date" required>  <input type="date" name="to_date" required> <input type = "submit"> </form> </td>  <tr /> </table> ')
 
 @app.route('/')
 def root():
@@ -163,8 +178,20 @@ def apiQuery():
     q = request.args.get("query")
     data = query_search(q)
     data_html = dispSelectData(data)
-    data_html = dispUpdateData(data)
     return header_html + main_html + data_html + footer_html
+
+@app.route('/api/dataUpload', methods=['POST'])
+def apiDataUpload():
+    append = bool(request.form.get("append"))
+    file_ = request.files['file']
+    file_.save(os.path.join('Files/', file_.filename))
+    flag = startDataUplaod(append, file_.filename)
+    # if not append:
+    #     q = "DELETE FROM EARTHQUAKES WHERE 1"
+    #     result = query(q)
+    #     if not result:
+    #         return False
+    return str(True)
 
 @app.route('/api/updateData', methods=['POST'])
 def apiUpdateData():
@@ -183,6 +210,30 @@ def apiDeleteData():
     else:
         update_html = ' <p> Failed </p> <br /> '
     return header_html + main_html + update_html + footer_html
+
+@app.route('/api/magnitude', methods=['GET'])
+def apiMagnitude():
+    magnitude = 5.0
+    q = "SELECT * FROM EARTHQUAKES WHERE MAG > " + str(magnitude)
+    data = query_search(q)
+    data_html = '<br /> <p> <b> Number of earthquaqes more than 5.0 magnitude is equal to ' + str(len(data)) + ' <p> </b> <br />'
+    data_html += dispSelectData(data)
+    return header_html + main_html + data_html + footer_html
+
+@app.route('/api/dateRange', methods=['GET'])
+def apiDataRange():
+    data1_html = '<table> <tr> <th> Range </th> <th> Number of EarthQuakes </th> </tr>'
+    data2_html = ''
+    for i in range(-4, 19, 1):
+        q = "SELECT * FROM EARTHQUAKES WHERE MAG BETWEEN " + str(i/2) + " AND " + str((i+1)/2)
+        print(q)
+        data = query_search(q)
+        data1_html += '<tr> <th> ' + str(i/2) + " AND " + str((i+1)/2) + " </th> <th> " + str(len(data)) + " </th> </tr> "
+        if len(data) > 0:
+            data2_html += dispSelectData(data)
+    data1_html += '</table>'
+    return header_html + main_html + data1_html + data2_html + footer_html
+
 
 @atexit.register
 def shutdown():
