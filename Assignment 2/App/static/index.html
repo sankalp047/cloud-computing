@@ -66,7 +66,15 @@
                 <th> Clusters </th>
                 <td>
                     <form method="GET" action="/api/clusters">
-                        <input type="submit" value="See now">
+                        <label>From: </label> 
+                        <input type="text" name="from_latitude" id="from_latitude">
+                        <input type="text" name="from_longitude" id="from_longitude">
+                        <br /> <label>To: </label> 
+                        <input type="text" name="to_latitude" id="to_latitude">
+                        <input type="text" name="to_longitude" id="to_longitude">
+                        <br /> <label>Square Area(sq km): </label> 
+                        <input type="text" name="area" id="area">
+                        <input type="submit" value="Clusterize">
                     </form>
                 </td>
             </tr>

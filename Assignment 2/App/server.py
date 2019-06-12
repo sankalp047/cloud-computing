@@ -3,6 +3,7 @@ import ibm_db
 import atexit
 import os
 import json
+import math
 import degrees as GEO
 from datetime import datetime
 
@@ -232,8 +233,51 @@ def apiCalGeoDistance():
     update_html = dispSelectData(new_data)
     return update_html 
 
-# @app.route('/api/clusters', methods=['GET'])
-# def apiClusters():
+@app.route('/api/clusters', methods=['GET'])
+def apiClusters():
+    from_latitude = float(request.args.get("from_latitude"))
+    from_longtitude = float(request.args.get("from_longitude"))
+    to_latitude = float(request.args.get("to_latitude"))
+    to_longtitude = float(request.args.get("to_longitude"))
+    area = float(request.args.get("area"))
+    print(area)
+    print(to_latitude)
+    print(to_longtitude)
+    print(from_latitude)
+    print(from_longtitude)
+    # a .rea = 1000000
+    length_area = area ** 0.5
+    degree_change = length_area/100      # 111km per degree
+    x_latitude = degree_change if to_latitude-from_latitude > 0 else -degree_change
+    x_longitude = degree_change if to_longtitude-from_longtitude > 0 else -degree_change
+
+    clusters = []
+    lat_index = int(math.ceil((to_latitude-from_latitude)/x_latitude))
+    long_index = int(math.ceil((to_longtitude-from_longtitude)/x_longitude))
+
+    start_lat = from_latitude
+    Map = []
+    # clusters.append(start_lat)
+    updated_html = '<table> <tr> <th> From Latitude </th> <th> From Longitude </th> <th> To Latitude </th> <th> To Longitude </th> <th> Count </th> <th> Avg Mag </th> </tr> '
+    for i in range(lat_index):
+        end_lat = start_lat + x_latitude
+        start_long = from_longtitude
+        lower_lat = start_lat if start_lat < end_lat else end_lat
+        upper_lat = start_lat if start_lat > end_lat else end_lat
+        for j in range(long_index):
+            end_long = start_long + x_longitude
+            clusters.append([start_lat, start_long, end_lat, end_long])
+            lower_long = start_long if start_long < end_long else end_long
+            upper_long = start_long if start_long > end_long else end_long
+            q = "SELECT COUNT(*) AS COUNT, AVG(MAG) AS MAG_AVG FROM EARTHQUAKES WHERE (LATITUDE BETWEEN " + str(lower_lat) + " AND " + str(upper_lat) + ") AND (LONGITUDE BETWEEN " + str(lower_long) + " AND " + str(upper_long) + ")"
+            rows = query_search(q)
+            updated_html += '<tr> <td> ' + str(start_lat) + ' </td> <td> ' + str(start_long) + ' </td> <td> ' + str(end_lat) + ' </td> <td> ' + str(end_long) + ' </td> <td> ' + str(rows[0]["COUNT"]) + ' </td> <td> ' + str(rows[0]["MAG_AVG"]) + ' </td> </tr>'
+            clusters.append([start_lat, start_long, end_lat, end_long, rows[0]["COUNT"]])
+            # print([start_lat, start_long, end_lat, end_long, rows[0]["COUNT"], rows[0]["MAG_AVG"]])
+            start_long = end_long
+        start_lat = end_lat
+
+    return updated_html + '</table>'
 
 @app.route('/api/hourHistogram', methods=['GET'])
 def apiHourHistogram():
