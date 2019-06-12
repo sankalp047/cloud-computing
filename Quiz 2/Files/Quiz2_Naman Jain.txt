@@ -171,6 +171,39 @@ def apiLocRange():
     and remove all earthquakes (remove all data) within that range. 
     Then show number of tuples (records) removed, and number remaining.
 
+def query_update(q):
+    try:
+        db2conn = ibm_db.connect(conn_str, "", "")
+        if db2conn:
+            statement = ibm_db.prepare(db2conn, q)
+            result = ibm_db.execute(statement)
+            ibm_db.close(db2conn)
+            return result
+    except:
+        print("Connection to Database failed")
+        exit(1)
+
+@app.route('/')
+def root():
+....... in between
+    body_html += '<tr> <th> Input Date (Deletion) </th> <td> <form method="POST" action="/api/deleteDate"> <label> Date: </label> <input type = "date" name="delete_date" id="delete_date" required> <br /> <input type="submit"> </form> </td> </tr>'
+
+@app.route('/api/deleteDate', methods=['POST'])
+def apiDeleteDate():
+    delete_date = datetime.strptime(request.form.get("delete_date"), '%Y-%m-%d').strftime('%Y-%m-%d')
+
+    q = "SELECT COUNT(*) AS COUNT FROM QUAKES WHERE DATE(REPLACE(REPLACE(TIME, 'T', ' '), 'Z', '')) = '" + delete_date + "'" 
+    rows = query_search(q)
+    count = rows[0]['COUNT']
+    q = "DELETE FROM QUAKES WHERE DATE(REPLACE(REPLACE(TIME, 'T', ' '), 'Z', '')) = '" + delete_date + "'" 
+    status = query_update(q)
+    if status: 
+        updated_html = '<br/> <p> Query Executed. Number of rows deleted = ' + str(count) + '</p> '
+    else: 
+        updated_html = '<br/> <p> Query Failed. Try Again </p> '
+
+    return header_html+updated_html
+
  9. Through a web interface (page), allow a user to give a state name (a part of the string in "place", for example "CA")
     a location in lat, long, and a distance (in degrees) value (for example, "CA", 34, -117.5, 2) and show all earthquakes
     in that lat, long, within that state, in an area plus or minus that number of degrees in lat or long, for the example,

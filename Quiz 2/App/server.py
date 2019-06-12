@@ -3,6 +3,7 @@ import atexit
 import os
 import json
 import ibm_db
+from datetime import datetime
 
 app = Flask(__name__, static_url_path='')
 
@@ -22,24 +23,37 @@ else:
     print("V-cap JSON not initialized")
     exit(1)
 
-def query_search(q):
+def query_update(q):
     try:
         db2conn = ibm_db.connect(conn_str, "", "")
         if db2conn:
             statement = ibm_db.prepare(db2conn, q)
-            ibm_db.execute(statement)
-            rows = []
-            result = ibm_db.fetch_assoc(statement)
-            while result != False:
-                rows.append(result.copy())
-                result = ibm_db.fetch_assoc(statement)
+            result = ibm_db.execute(statement)
+            print(result)
             ibm_db.close(db2conn)
-            return rows
-        else:
-            return False
+            return result
     except:
         print("Connection to Database failed")
         exit(1)
+
+def query_search(q):
+    # try:
+    db2conn = ibm_db.connect(conn_str, "", "")
+    if db2conn:
+        statement = ibm_db.prepare(db2conn, q)
+        ibm_db.execute(statement)
+        rows = []
+        result = ibm_db.fetch_assoc(statement)
+        while result != False:
+            rows.append(result.copy())
+            result = ibm_db.fetch_assoc(statement)
+        ibm_db.close(db2conn)
+        return rows
+    else:
+        return False
+    # except:
+    #     print("Connection to Database failed")
+    #     exit(1)
 
 def dispSelectData(data):
     if data:
@@ -80,6 +94,8 @@ def root():
     body_html += '<tr> <th> Input Mag Range </th> <td> <form method="POST" action="/api/magRange"> <label> From: </label> <input type = "text" name="from" id="from" required> <br /> <label> To: </label> <input type = "text" name="to" id="to" required> <br /> <input type="submit"> </form> </td> </tr>'
 
     body_html += '<tr> <th> Input 2 Locations </th> <td> <form method="POST" action="/api/locRange"> <label> From(lat, long): </label> <input type = "text" name="from_lat" id="from_lat" required>  <input type = "text" name="from_long" id="from_long" required> <br /> <label> To(lat, long): </label> <input type = "text" name="to_lat" id="to_lat" required>  <input type = "text" name="to_long" id="to_long" required> <br /> <input type="submit"> </form> </td> </tr>'
+    
+    body_html += '<tr> <th> Input Date (Deletion) </th> <td> <form method="POST" action="/api/deleteDate"> <label> Date: </label> <input type = "date" name="delete_date" id="delete_date" required> <br /> <input type="submit"> </form> </td> </tr>'
     return header_html+body_html
 
 @app.route('/api/magRange', methods=['POST'])
@@ -110,12 +126,27 @@ def apiLocRange():
     upper_long = from_long if from_long > to_long else to_long
     lower_long = from_long if from_long < to_long else to_long
 
-
     q = "SELECT LATITUDE, LONGITUDE, PLACE FROM QUAKES WHERE (LATITUDE BETWEEN " + str(lower_lat) + " AND " + str(upper_lat) + ") AND (LONGITUDE BETWEEN " + str(lower_long) + " AND " + str(upper_long) + ")"
     rows = query_search(q)
     updated_html = dispSelectData(rows)
 
     return header_html+updated_html 
+
+@app.route('/api/deleteDate', methods=['POST'])
+def apiDeleteDate():
+    delete_date = datetime.strptime(request.form.get("delete_date"), '%Y-%m-%d').strftime('%Y-%m-%d')
+
+    q = "SELECT COUNT(*) AS COUNT FROM QUAKES WHERE DATE(REPLACE(REPLACE(TIME, 'T', ' '), 'Z', '')) = '" + delete_date + "'" 
+    rows = query_search(q)
+    count = rows[0]['COUNT']
+    q = "DELETE FROM QUAKES WHERE DATE(REPLACE(REPLACE(TIME, 'T', ' '), 'Z', '')) = '" + delete_date + "'" 
+    status = query_update(q)
+    if status: 
+        updated_html = '<br/> <p> Query Executed. Number of rows deleted = ' + str(count) + '</p> '
+    else: 
+        updated_html = '<br/> <p> Query Failed. Try Again </p> '
+
+    return header_html+updated_html
 
 @atexit.register
 def shutdown():
