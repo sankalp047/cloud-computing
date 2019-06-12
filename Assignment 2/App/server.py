@@ -3,7 +3,8 @@ import ibm_db
 import atexit
 import os
 import json
-import csv
+import degrees as GEO
+from datetime import datetime
 
 app = Flask(__name__, static_url_path='')
 
@@ -145,33 +146,21 @@ def constructUpdateQuery(data):
         html = ' <p> Failed </p> <br /> '
     return html
 
-def startDataUplaod(append, csvFileName):
-    # if not append:
-    #     q = "DELETE FROM EARTHQUAKES WHERE 1"
-    #     result = query(q)
-    #     if not result:
-    #         return False
-    with open ('Files/'+csvFileName, 'r') as f:
-        reader = csv.reader(f)
-        columns = next(reader) 
-        q = 'insert into MyTable({0}) values ({1})'
-        print(q)
-        return True
-
 header_html = '<html> <head> <title> Assignment 2 </title> </head> <body> <h2> <center> Assignment 2 </center> </h2>'
 footer_html = '<br /> <h4> By: Naman Jain Vimal Kumar <h4> </body> </html>'
 
-main_html = ('<table> <tr> <th> Uplaod Excel for Earth Quakes </th> <td> <form method="POST" enctype="multipart/form-data" action="/api/dataUpload"> '
-    +'<input type="file" id="file" name="file" id="file" required> <br />'
-    +'<input type="radio" name="append" value="True"> Append <input type="radio" name="append" value="False" checked> New Data <br />' 
-    +'<input type="submit"> </form> </td> </tr>'
-    +'<tr> <th> Query </th> <td> <form action="/api/query" method="GET"> <input type="text" name="query" id="query" required> <input type="submit"> </form> </td> <tr />'
+main_html = ('<table> <tr> <th> Query </th> <td> <form action="/api/query" method="GET"> <input type="text" name="query" id="query" required> <input type="submit"> </form> </td> <tr />'
     +'<tr> <th> EarthQuakes more than Magnitude 5.0 </th> <td> <form action = "/api/magnitude?mag=5.0" method="GET"> <input type = "submit"> </form> </td>  <tr />'
-    +'<tr> <th> EarthQuakes in groups of magnitude </th> <td> <form action = "/api/dateRange" method="GET"> <input type="date" name="from_date" required>  <input type="date" name="to_date" required> <input type = "submit"> </form> </td>  <tr /> </table> ')
+    +'<tr> <th> EarthQuakes in groups of magnitude </th> <td> <form action = "/api/dateRange" method="GET"> <input type="date" name="from_date" required>  <input type="date" name="to_date" required> <input type = "submit"> </form> </td>  <tr /> '
+    +'<tr> <th> Earthquakes near me </th> <td> <form action="/api/calGeoDistance" method="POST" > <label> Latitude: </label> <input id="lat" type="text" name="latitude" value="latitude" required> '
+    +'<label> Longitude: </label> <input type="text" id = "long" name="longitude" value="longitude" required> <label> Distance(km): </label> <input type="text" name="distance" value="distance" required> '
+    +'<input type="submit" name="Find"> </form> <br /> <button type-"button" onclick="getMyLocation"> Find my location </button> </td> <script> function getLocation() { if (navigator.geolocation) '
+    +'{navigator.geolocation.getCurrentPosition(showPosition);} else { x.innerHTML = "Geolocation is not supported by this browser.";} } function showPosition(position) { x.innerHTML = "Latitude: " + position.coords.latitude + "<br>Longitude: " + position.coords.longitude; }'
+    +'</script> </tr> </table> <p id="demo"> </p> ')
 
 @app.route('/')
 def root():
-    return header_html + main_html + footer_html
+    return app.send_static_file('index.html')
 
 @app.route('/api/query', methods=['GET'])
 def apiQuery():
@@ -179,19 +168,6 @@ def apiQuery():
     data = query_search(q)
     data_html = dispSelectData(data)
     return header_html + main_html + data_html + footer_html
-
-@app.route('/api/dataUpload', methods=['POST'])
-def apiDataUpload():
-    append = bool(request.form.get("append"))
-    file_ = request.files['file']
-    file_.save(os.path.join('Files/', file_.filename))
-    flag = startDataUplaod(append, file_.filename)
-    # if not append:
-    #     q = "DELETE FROM EARTHQUAKES WHERE 1"
-    #     result = query(q)
-    #     if not result:
-    #         return False
-    return str(True)
 
 @app.route('/api/updateData', methods=['POST'])
 def apiUpdateData():
@@ -222,17 +198,48 @@ def apiMagnitude():
 
 @app.route('/api/dateRange', methods=['GET'])
 def apiDataRange():
+    from_date = datetime.strptime(request.args.get("from_date"), '%Y-%m-%d').strftime('%d-%m-%Y')
+    to_date = datetime.strptime(request.args.get("to_date"), '%Y-%m-%d').strftime('%d-%m-%Y')
     data1_html = '<table> <tr> <th> Range </th> <th> Number of EarthQuakes </th> </tr>'
     data2_html = ''
     for i in range(-4, 19, 1):
-        q = "SELECT * FROM EARTHQUAKES WHERE MAG BETWEEN " + str(i/2) + " AND " + str((i+1)/2)
-        print(q)
+        q = "SELECT * FROM EARTHQUAKES WHERE MAG BETWEEN " + str(float(i)/2) + " AND " + str(float(i+1)/2) + " AND DATE(REPLACE(REPLACE(TIME, 'T', ' '), 'Z', '')) BETWEEN DATE(TO_DATE('"+from_date+"','DD-MM-YYYY')) AND DATE(TO_DATE('"+to_date+"','DD-MM-YYYY'))"
         data = query_search(q)
-        data1_html += '<tr> <th> ' + str(i/2) + " AND " + str((i+1)/2) + " </th> <th> " + str(len(data)) + " </th> </tr> "
+        data1_html += '<tr> <th> ' + str(float(i/2)) + " AND " + str(float(i+1)/2) + " </th> <th> " + str(len(data)) + " </th> </tr> "
+        data2_html += '<br /> <br /> <p> Date from ' + str(float(i/2)) + " and " + str(float(i+1)/2) + " magnitude: </br> </p>"
         if len(data) > 0:
             data2_html += dispSelectData(data)
+        else:
+            data2_html += "<p> No data </p>"
     data1_html += '</table>'
     return header_html + main_html + data1_html + data2_html + footer_html
+
+@app.route('/api/calGeoDistance', methods=['POST'])
+def apiCalGeoDistance():
+    latitude = float(request.form.get("latitude"))
+    longitude = float(request.form.get("longitude"))
+    distance = float(request.form.get("distance"))
+    q = "SELECT * FROM EARTHQUAKES WHERE 1"
+    data = query_search(q)
+    latitudes = [ float(e['LATITUDE']) for e in data ]
+    longitudes = [ float(e['LONGITUDE']) for e in data ]
+
+    d = GEO.geoDifference(latitudes, longitudes, latitude, longitude)
+    new_data = []
+    for i in range(len(data)):
+        if d[i] <= distance:
+            new_data.append(data[i])
+    update_html = dispSelectData(new_data)
+    return update_html 
+
+# @app.route('/api/clusters', methods=['GET'])
+# def apiClusters():
+
+@app.route('/api/hourHistogram', method=['GET'])
+def apiHourHistogram():
+    q = "SELECT * FROM EARTHQUAKES WHERE 1"
+    data = query_search(q)
+    return data
 
 
 @atexit.register
