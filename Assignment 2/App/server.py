@@ -235,11 +235,32 @@ def apiCalGeoDistance():
 # @app.route('/api/clusters', methods=['GET'])
 # def apiClusters():
 
-@app.route('/api/hourHistogram', method=['GET'])
+@app.route('/api/hourHistogram', methods=['GET'])
 def apiHourHistogram():
-    q = "SELECT * FROM EARTHQUAKES WHERE 1"
+    q = "SELECT MAG, TIME, LATITUDE, LONGITUDE FROM EARTHQUAKES WHERE MAG > 4.0"
     data = query_search(q)
-    return data
+
+    time = [ str(e['TIME']) for e in data ]
+    longitudes = [ float(e['LONGITUDE']) for e in data ]
+
+    Map = []
+    for i in range(24):
+        Map.append([])
+    C_TIME = GEO.getCorrespondingTime(longitudes, time)
+    hrs = [ int(str(e)[11:13]) for e in C_TIME ]
+    for i in range(len(data)):
+        Map[hrs[i]].append(data[i])
+    
+    update_html = '<table> <tr> <th> Hours </th> <th> Count </th> <th> Average Magnitude </th> <th> Percentage </th> </tr> '
+    for i in range(24):
+        update_html += '<tr> <th> ' + str(i) + ' </th> <td> ' + str(len(Map[i])) + ' </td> '
+        sum_mag = 0
+        for e in Map[i]:
+            sum_mag += float(e['MAG'])
+        update_html += '<td> ' + str(sum_mag/len(Map[i])) + '</td> '
+        update_html += '<td> ' + str(float(len(Map[i]))/len(data)) + '</td> </tr>'
+
+    return update_html
 
 
 @atexit.register
