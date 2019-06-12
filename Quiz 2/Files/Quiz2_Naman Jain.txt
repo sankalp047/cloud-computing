@@ -209,6 +209,23 @@ def apiDeleteDate():
     in that lat, long, within that state, in an area plus or minus that number of degrees in lat or long, for the example,
     all earthquakes in "CA" that are within 2 degrees of 34, -117.5  
 
+@app.route('/')
+def root():
+....... in between
+    body_html += '<tr> <th> Search </th> <td> <form method="POST" action="/api/search"> <label> State: </label> <input type = "text" name="state" id="state" required> <br /> <label> Location(lat, long): </label> <input type = "text" name="lat" id="lat" required>  <input type = "text" name="long" id="long" required>  <input type="submit"> </form> </td> </tr>'
+
+@app.route('/api/search', methods=['POST'])
+def apiSearch():
+    state = str(request.form.get("state"))
+    lat = float(request.form.get("lat"))
+    long_ = float(request.form.get("long"))
+
+    q = "SELECT * FROM QUAKES WHERE (LATITUDE BETWEEN " + str(lat-2) + " AND " + str(lat+2) + ") AND (LONGITUDE BETWEEN " + str(long_-2) + " AND " + str(long_+2) + ") AND LOWER(PLACE) LIKE '%" + str(state.lower()) + "%'"
+    rows = query_search(q)
+    updated_html = dispSelectData(rows)
+
+    return header_html+updated_html 
+
  10. Show GTA parts 5, 6, 7, 8, 9
 
  11. When complete, return (send) this quiz

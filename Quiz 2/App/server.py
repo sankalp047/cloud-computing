@@ -96,6 +96,8 @@ def root():
     body_html += '<tr> <th> Input 2 Locations </th> <td> <form method="POST" action="/api/locRange"> <label> From(lat, long): </label> <input type = "text" name="from_lat" id="from_lat" required>  <input type = "text" name="from_long" id="from_long" required> <br /> <label> To(lat, long): </label> <input type = "text" name="to_lat" id="to_lat" required>  <input type = "text" name="to_long" id="to_long" required> <br /> <input type="submit"> </form> </td> </tr>'
     
     body_html += '<tr> <th> Input Date (Deletion) </th> <td> <form method="POST" action="/api/deleteDate"> <label> Date: </label> <input type = "date" name="delete_date" id="delete_date" required> <br /> <input type="submit"> </form> </td> </tr>'
+
+    body_html += '<tr> <th> Search </th> <td> <form method="POST" action="/api/search"> <label> State: </label> <input type = "text" name="state" id="state" required> <br /> <label> Location(lat, long): </label> <input type = "text" name="lat" id="lat" required>  <input type = "text" name="long" id="long" required>  <input type="submit"> </form> </td> </tr>'
     return header_html+body_html
 
 @app.route('/api/magRange', methods=['POST'])
@@ -147,6 +149,19 @@ def apiDeleteDate():
         updated_html = '<br/> <p> Query Failed. Try Again </p> '
 
     return header_html+updated_html
+
+@app.route('/api/search', methods=['POST'])
+def apiSearch():
+    state = str(request.form.get("state"))
+    lat = float(request.form.get("lat"))
+    long_ = float(request.form.get("long"))
+
+    q = "SELECT * FROM QUAKES WHERE (LATITUDE BETWEEN " + str(lat-2) + " AND " + str(lat+2) + ") AND (LONGITUDE BETWEEN " + str(long_-2) + " AND " + str(long_+2) + ") AND LOWER(PLACE) LIKE '%" + str(state.lower()) + "%'"
+    rows = query_search(q)
+    updated_html = dispSelectData(rows)
+
+    return header_html+updated_html 
+
 
 @atexit.register
 def shutdown():
