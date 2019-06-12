@@ -1,0 +1,184 @@
+
+Name: Naman Jain Vimal Kumar
+Last 4 digits ID: 0153 
+Computer IP address:
+CSE 6331, Cloud Computing					
+
+
+Quiz Q2, 3.30, Summer 2019   (c) DL, UTA, 2019
+
+
+  C&P means cut and paste only those relevant lines from your program(s) into this quiz.
+
+
+ 1.  I understand that I am on my honor during this quiz, I will not collaborate, use 
+     non-allowed sources, and I will not discuss or share this quiz with anyone for the next 
+     12 hours.
+     You MAY: use Google to search, use previous source code, 
+     YOU MAY NOT use:
+     Email, Facebook, Hangouts, IM, chats, Skype or ANY other human connection.
+
+     This is a timed test. Late tests will have points deducted for being late.
+     Very late tests will not be graded.
+
+     When you are complete, with any part, please raise your hand, so we may visually inspect that part.
+
+     The second part of the test, you should electronically submit, you will need to copy and paste 
+     only those lines of code to implement that part of the test, usually a few (two to eight) lines of code. 
+     Place it immediately after the question.
+
+     Submit this Quiz (renamed) with code cut and pasted, ONLY text. DO NOT submit zips, binaries, libraries,
+     or anything other than text.
+
+     When any parts(questions) are complete complete, submit this test, you may make multiple submissions.
+
+     If you have computer, or other, problems, please raise your hand immediately.
+
+     If you understand and agree, please initial here:
+     _________________
+
+ 2. Get files from this same folder.
+   
+ 3. Name your program/submission with your name and last digits of your ID.
+
+ 4. Using the cloud services provider, all functionality possible should be implemented on that provider.
+    (Of course, displaying web pages through a browser and the user interface is "local")
+    The cloud service provider is IBM Cloud (BlueMix).
+  
+Show and submit code, when each part is complete, raise your hand and then show us:
+
+Connection String: DATABASE=BLUDB;HOSTNAME=dashdb-txn-sbox-yp-dal09-03.services.dal.bluemix.net;PORT=50000;PROTOCOL=tcpip;UID=crk23459;PWD=d93dt512t^n0902z
+
+ 5. Show a web page and interface (which resides on the cloud provider) with your student ID followed by your
+    last name then comma then first name (as it appears on your student ID), in large font at the top of every web page displayed 
+    (for this quiz)
+    Upload the earthquake data ("quakes") to cloud service, and import into a relational DB (SQL).
+    Then, below your name and ID, show the total number of earthquakes ("quakes") in the data set, 
+    and give the largest one ("mag") and its location (the name, the "place" location).  
+
+header_html = '<html> <head> <title> Quiz 2 </title> </head> <body> <h1> ID: 1001670153 </h1> <h1> Name: Vimal Kumar, Naman Jain </h1> <br />'
+
+@app.route('/')
+def root():
+    body_html = '<table> <tr> <th> Count </th> <td> Total number of Quakes = '
+    q = "SELECT COUNT(*) AS COUNT FROM QUAKES"
+    rows = query_search(q)
+    body_html = '<table> <tr> <th> Count </th> <td> Total number of Quakes = '+str(rows[0]['COUNT'])+'</td> </tr> '
+    q = "SELECT PLACE, LATITUDE, LONGITUDE FROM QUAKES WHERE MAG = (SELECT MAX(MAG) FROM QUAKES WHERE 1)"
+    rows = query_search(q)
+    body_html += '<table> <tr> <th> MAX MAG QUAKE </th> <td> Place: '+str(rows[0]['PLACE'])+' <br /> <td> Location(Lat, Long): ('+str(rows[0]['LATITUDE'])+ ', ' + str(rows[0]['LONGITUDE']) + ') </td> </tr>'
+    return header_html+body_html
+
+ 6. Through a web interface (page), allow a user to give two magnitude values (for example 3.0 and 5.0) and show the
+    number of quakes between those values in 0.1 increments (that is 3.0 to 3.1, 3.1 to 3.2, 3.2 to 3.3, up to 4.9 to 5.0;
+    show the number of quakes in EACH interval).
+
+# Function definations 
+
+def query_search(q):
+    try:
+        db2conn = ibm_db.connect(conn_str, "", "")
+        if db2conn:
+            statement = ibm_db.prepare(db2conn, q)
+            ibm_db.execute(statement)
+            rows = []
+            result = ibm_db.fetch_assoc(statement)
+            while result != False:
+                rows.append(result.copy())
+                result = ibm_db.fetch_assoc(statement)
+            ibm_db.close(db2conn)
+            return rows
+        else:
+            return False
+    except:
+        print("Connection to Database failed")
+        exit(1)
+
+def dispSelectData(data):
+    if data:
+        keys = data[0].keys()
+        body = '<table> <tr> '
+        for key in keys:
+            body += '<th> ' + str(key) + '</th>'
+        body += '</tr>'
+        for record in data:
+            body += '<tr>'
+            for key in keys:
+                if record.get(key) is not None:
+                    if str(key).lower() == "picture" or str(key).lower() == "image":
+                        body += '<td> <img src = "' + storage_url + str(record.get(key)) + '" width=150 height=150 alt = "No image found"/> </td>'
+                    else:
+                        body += '<td> ' + str(record.get(key)) + '</td>'
+                else:
+                    body += '<td> </td>'
+            body += '</tr>'
+        body += '</table>'
+        return body
+    else:
+        return '<h3> No records found </h3>'
+
+
+@app.route('/')
+def root():
+....... in between
+   body_html += '<tr> <th> Input Mag Range </th> <td> <form method="POST" action="/api/magRange"> <label> From: </label> <input type = "text" name="from" id="from" required> <br /> <label> To: </label> <input type = "text" name="to" id="to" required> <br /> <input type="submit"> </form> </td> </tr>'
+
+@app.route('/api/magRange', methods=['POST'])
+def apiMagRange():
+    from_mag = float(request.form.get("from"))
+    to_mag = float(request.form.get("to"))
+
+    start = from_mag
+    shift_index = 0.1
+    updated_html = '<table> <tr> <th> Range </th> <th> COUNT </th> </tr>'
+    while(start <= to_mag):
+        q = "SELECT COUNT(*) AS COUNT FROM QUAKES WHERE MAG BETWEEN " + str(start) + " AND " + str(start + 0.1)
+        print(q)
+        rows = query_search(q)
+        updated_html += '<tr> <th> '+str(start) + " AND " + str(start + 0.1) + "</th> <td> " + str(rows[0]['COUNT']) + '</td> </tr>'
+        start = start + 0.1
+
+    return header_html+updated_html 
+
+ 7. Through a web interface (page), allow a user to give two location values (lat and long for two different locations) 
+    and show (list) the lat, long, and place (name), for every earthquake in that area (box).
+
+@app.route('/')
+def root():
+....... in between
+    body_html += '<tr> <th> Input 2 Locations </th> <td> <form method="POST" action="/api/locRange"> <label> From(lat, long): </label> <input type = "text" name="from_lat" id="from_lat" required>  <input type = "text" name="from_long" id="from_long" required> <br /> <label> To(lat, long): </label> <input type = "text" name="to_lat" id="to_lat" required>  <input type = "text" name="to_long" id="to_long" required> <br /> <input type="submit"> </form> </td> </tr>'
+
+@app.route('/api/locRange', methods=['POST'])
+def apiLocRange():
+    from_lat = float(request.form.get("from_lat"))
+    to_lat = float(request.form.get("to_lat"))
+    from_long = float(request.form.get("from_long"))
+    to_long = float(request.form.get("to_long"))
+
+    upper_lat = from_lat if from_lat > to_lat else to_lat
+    lower_lat = from_lat if from_lat < to_lat else to_lat
+    upper_long = from_long if from_long > to_long else to_long
+    lower_long = from_long if from_long < to_long else to_long
+
+
+    q = "SELECT LATITUDE, LONGITUDE, PLACE FROM QUAKES WHERE (LATITUDE BETWEEN " + str(lower_lat) + " AND " + str(upper_lat) + ") AND (LONGITUDE BETWEEN " + str(lower_long) + " AND " + str(upper_long) + ")"
+    rows = query_search(q)
+    updated_html = dispSelectData(rows)
+
+    return header_html+updated_html 
+
+ 8. Through a web interface (page), allow a user to give a date (one, single, day) in Z (GMT) and a mag range, 
+    and remove all earthquakes (remove all data) within that range. 
+    Then show number of tuples (records) removed, and number remaining.
+
+ 9. Through a web interface (page), allow a user to give a state name (a part of the string in "place", for example "CA")
+    a location in lat, long, and a distance (in degrees) value (for example, "CA", 34, -117.5, 2) and show all earthquakes
+    in that lat, long, within that state, in an area plus or minus that number of degrees in lat or long, for the example,
+    all earthquakes in "CA" that are within 2 degrees of 34, -117.5  
+
+ 10. Show GTA parts 5, 6, 7, 8, 9
+
+ 11. When complete, return (send) this quiz
+     If you finish early, send this immediately, otherwise send between
+     the end of class and no more than 1 minute after that.
+
