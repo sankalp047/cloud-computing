@@ -54,12 +54,9 @@ def calculate_timings(n_time):
         time = datetime.now() - start
         detail.update({"label": labels[i], "time": time})
         details.append(detail)
-    return details
-
-def calculate_timings_redis(n_time):
-    details = []
+    
     sqls = ["SELECT * FROM earthquakes", "SELECT * FROM earthquakes WHERE latitude between -90 to 0"]
-    labels = ["Query without restriction", "Query with restriction"]
+    labels = ["Query without restriction with Redis", "Query with restriction with Redis"]
     redis_labels = ["quakesAll", "quakesConditional"]
     for i, sql in enumerate(sqls):
         detail = ({})
@@ -75,6 +72,27 @@ def calculate_timings_redis(n_time):
         detail.update({"label": labels[i], "time": time})
         details.append(detail)
     return details
+    
+
+# def calculate_timings_redis(n_time):
+#     details = []
+#     sqls = ["SELECT * FROM earthquakes", "SELECT * FROM earthquakes WHERE latitude between -90 to 0"]
+#     labels = ["Query without restriction", "Query with restriction"]
+#     redis_labels = ["quakesAll", "quakesConditional"]
+#     for i, sql in enumerate(sqls):
+#         detail = ({})
+#         start = datetime.now()
+#         for j in range(n_time):
+#             rows = r.get(redis_labels[i])
+#             if rows is None:
+#                 rows = search_query(sql)
+#                 r.set(redis_labels[i], str(rows))
+#             else:
+#                 print("Used Redis")
+#         time = datetime.now() - start
+#         detail.update({"label": labels[i], "time": time})
+#         details.append(detail)
+#     return details
 
 def showTable(data):
     if len(data) > 0:
@@ -98,7 +116,7 @@ def select():
 @app.route("/api/timings", methods=['POST'])
 def apiTimings():
     n_time = int(request.form.get("n_time"))
-    details = calculate_timings_redis(n_time)
+    details = calculate_timings(n_time)
     return showTable(details)
 
 if __name__ == "__main__":
