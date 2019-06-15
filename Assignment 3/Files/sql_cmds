@@ -1,0 +1,32 @@
+https://docs.microsoft.com/en-us/sql/linux/sql-server-linux-setup-tools?view=sql-server-2017#macos
+
+sqlcmd -S nxv-assignments.database.windows.net -d alpha -U nxv -P nike@123 -I -Q "
+    CREATE TABLE EARTHQUAKES
+    (
+        TIME VARCHAR(256),
+        LATITUDE DECIMAL(28, 13),
+        LONGITUDE DECIMAL(27, 12),
+        DEPTH DECIMAL(19, 9),
+        MAG DECIMAL(5, 2),
+        MAGTYPE VARCHAR(5),
+        NST SMALLINT,
+        GAP DECIMAL(18, 8),
+        DMIN DECIMAL(23, 11),
+        RMS DECIMAL(20, 10),
+        NET VARCHAR(2),
+        ID VARCHAR(12),
+        UPDATED VARCHAR(256),
+        PLACE VARCHAR(43),
+        TYPE VARCHAR(12),
+        HORIZONTALERROR DECIMAL(19, 9),
+        DEPTHERROR DECIMAL(19, 9),
+        MAGERROR FLOAT(34),
+        MAGNST SMALLINT,
+        STATUS VARCHAR(9),
+        LOCATIONS VARCHAR(2),
+        MAGSOURCE VARCHAR(2)
+    )
+    ;
+"
+
+bcp EARTHQUAKES in all_month.csv -S nxv-assignments.database.windows.net -d alpha -U nxv -P nike@123 -q -c -t  ,
