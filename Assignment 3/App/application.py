@@ -3,31 +3,35 @@ import os
 import json
 from datetime import datetime
 
+# Ref https://www.microsoft.com/en-us/sql-server/developer-get-started/python/mac/step/2.html
+import pyodbc
+
 # Redis
 import redis
 
-r = redis.StrictRedis(host='nxv-dns.redis.cache.windows.net',
-        port=6380, db=0, password='j+AFTdXNZbULwQabkcz33gT0UwpWTZFEf8sEVSR8XT8=', ssl=True)
+if os.path.isfile('credentials.json'):
+    with open('credentials.json') as f:
+        cred = json.load(f)
 
-# Ref https://www.microsoft.com/en-us/sql-server/developer-get-started/python/mac/step/2.html
-import pyodbc
-server = 'nxv-assignments.database.windows.net'
-database = 'alpha'
-username = 'nxv'
-password = 'nike@123'
-cnxn = pyodbc.connect('DRIVER={ODBC Driver 17 for SQL Server};SERVER='+server+';DATABASE='+database+';UID='+username+';PWD='+ password)
-cursor = cnxn.cursor()
+        db = cred['database'][0]
+        cnxn = pyodbc.connect('DRIVER={ODBC Driver 17 for SQL Server};SERVER='+db['hostname']+';DATABASE='+db['dbname']+';UID='+db['user']+';PWD='+ db['password'])
+        cursor = cnxn.cursor()
+
+        redis_cred = cred['redis'][0]
+        r = redis.StrictRedis(host=redis_cred['hostname'], port=redis_cred['port'], db=redis_cred['db'], password=redis_cred['primary_key'], ssl=redis_cred['ssl'])
+else:
+    print("V-cap JSON not initialized")
+    exit(1)
 
 app = Flask(__name__)
 port = int(os.getenv('PORT', 8000))
 
-# header = ["hello", "world"]
-
 def execute_query(query):
-    try:
-        return cursor.execute(query)
-    except:
-        return {"Error": "Error in search query function"}
+    print("HERE")
+    # try:
+    return cursor.execute(query)
+    # except:
+        # return {"Error": "Error in search query function"}
 
 def search_query(query):
     try:
@@ -38,30 +42,35 @@ def search_query(query):
             for index, key in enumerate(cursor.description):
                 record.update({key[0]: row[index]})
             rows.append(record)
-        return records
+        return rows
     except:
         return {"Error": "Error in search query function"}
 
-def calculate_timings(n_time):
+def calculate_timings(n_time, sqls):
     details = []
-    sqls = ["SELECT * FROM earthquakes", "SELECT * FROM earthquakes WHERE latitude between -90 to 0"]
     labels = ["Query without restriction", "Query with restriction"]
     for i, sql in enumerate(sqls):
+        print(i)
         detail = ({})
         start = datetime.now()
         for j in range(n_time):
+            print(j)
             rows = search_query(sql)
+            # print(len(rows))
+            print("-----------")
         time = datetime.now() - start
         detail.update({"label": labels[i], "time": time})
         details.append(detail)
-    
-    sqls = ["SELECT * FROM earthquakes", "SELECT * FROM earthquakes WHERE latitude between -90 to 0"]
+    print("Completed SQL")
     labels = ["Query without restriction with Redis", "Query with restriction with Redis"]
-    redis_labels = ["quakesAll", "quakesConditional"]
+    redis_labels = ["quakesAll1", "quakesConditional1"]
+    sanity = ({})
     for i, sql in enumerate(sqls):
+        print(i)
         detail = ({})
         start = datetime.now()
         for j in range(n_time):
+            print(j)
             rows = r.get(redis_labels[i])
             if rows is None:
                 rows = search_query(sql)
@@ -72,27 +81,6 @@ def calculate_timings(n_time):
         detail.update({"label": labels[i], "time": time})
         details.append(detail)
     return details
-    
-
-# def calculate_timings_redis(n_time):
-#     details = []
-#     sqls = ["SELECT * FROM earthquakes", "SELECT * FROM earthquakes WHERE latitude between -90 to 0"]
-#     labels = ["Query without restriction", "Query with restriction"]
-#     redis_labels = ["quakesAll", "quakesConditional"]
-#     for i, sql in enumerate(sqls):
-#         detail = ({})
-#         start = datetime.now()
-#         for j in range(n_time):
-#             rows = r.get(redis_labels[i])
-#             if rows is None:
-#                 rows = search_query(sql)
-#                 r.set(redis_labels[i], str(rows))
-#             else:
-#                 print("Used Redis")
-#         time = datetime.now() - start
-#         detail.update({"label": labels[i], "time": time})
-#         details.append(detail)
-#     return details
 
 def showTable(data):
     if len(data) > 0:
@@ -116,7 +104,8 @@ def select():
 @app.route("/api/timings", methods=['POST'])
 def apiTimings():
     n_time = int(request.form.get("n_time"))
-    details = calculate_timings(n_time)
+    sqls = [str(request.form.get("q1")), str(request.form.get("q2"))]
+    details = calculate_timings(n_time, sqls)
     return showTable(details)
 
 if __name__ == "__main__":
