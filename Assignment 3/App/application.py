@@ -3,6 +3,12 @@ import os
 import json
 from datetime import datetime
 
+# Redis
+import redis
+
+r = redis.StrictRedis(host='nxv-dns.redis.cache.windows.net',
+        port=6380, db=0, password='j+AFTdXNZbULwQabkcz33gT0UwpWTZFEf8sEVSR8XT8=', ssl=True)
+
 # Ref https://www.microsoft.com/en-us/sql-server/developer-get-started/python/mac/step/2.html
 import pyodbc
 server = 'nxv-assignments.database.windows.net'
@@ -44,8 +50,27 @@ def calculate_timings(n_time):
         detail = ({})
         start = datetime.now()
         for j in range(n_time):
-            print(j)
-            rows = execute_query(sql)
+            rows = search_query(sql)
+        time = datetime.now() - start
+        detail.update({"label": labels[i], "time": time})
+        details.append(detail)
+    return details
+
+def calculate_timings_redis(n_time):
+    details = []
+    sqls = ["SELECT * FROM earthquakes", "SELECT * FROM earthquakes WHERE latitude between -90 to 0"]
+    labels = ["Query without restriction", "Query with restriction"]
+    redis_labels = ["quakesAll", "quakesConditional"]
+    for i, sql in enumerate(sqls):
+        detail = ({})
+        start = datetime.now()
+        for j in range(n_time):
+            rows = r.get(redis_labels[i])
+            if rows is None:
+                rows = search_query(sql)
+                r.set(redis_labels[i], str(rows))
+            else:
+                print("Used Redis")
         time = datetime.now() - start
         detail.update({"label": labels[i], "time": time})
         details.append(detail)
@@ -73,7 +98,7 @@ def select():
 @app.route("/api/timings", methods=['POST'])
 def apiTimings():
     n_time = int(request.form.get("n_time"))
-    details = calculate_timings(n_time)
+    details = calculate_timings_redis(n_time)
     return showTable(details)
 
 if __name__ == "__main__":
