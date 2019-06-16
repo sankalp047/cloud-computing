@@ -10,7 +10,7 @@
             <tr>
                 <th> Calculate timings: </th>
                 <td>
-                    <form action="/api/timings" method="POST">
+                    <form action="/api/timings" method="GET">
                         <label> Number of times to run the timings for: </label><input type="text" name="n_time" value="1000" required> <br /> <br />
                         <label> Query without restriction: </label><input type="text" name="q1" value="SELECT * FROM earthquakes" size="100" required> <br /> <br />
                         <label> Query with restriction: </label><input type="text" name="q2" value="SELECT * FROM earthquakes WHERE latitude between -90 and 0" size="100" required> <br /> <br />

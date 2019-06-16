@@ -20,18 +20,17 @@ if os.path.isfile('credentials.json'):
         redis_cred = cred['redis'][0]
         r = redis.StrictRedis(host=redis_cred['hostname'], port=redis_cred['port'], db=redis_cred['db'], password=redis_cred['primary_key'], ssl=redis_cred['ssl'])
 else:
-    print("V-cap JSON not initialized")
+    print("credentials JSON not initialized")
     exit(1)
 
 app = Flask(__name__)
 port = int(os.getenv('PORT', 8000))
 
 def execute_query(query):
-    print("HERE")
-    # try:
-    return cursor.execute(query)
-    # except:
-        # return {"Error": "Error in search query function"}
+    try:
+        return cursor.execute(query)
+    except:
+        return {"Error": "Error in search query function"}
 
 def search_query(query):
     try:
@@ -47,36 +46,29 @@ def search_query(query):
         return {"Error": "Error in search query function"}
 
 def calculate_timings(n_time, sqls):
+    r.flushall()
     details = []
     labels = ["Query without restriction", "Query with restriction"]
     for i, sql in enumerate(sqls):
-        print(i)
         detail = ({})
         start = datetime.now()
         for j in range(n_time):
-            print(j)
-            rows = search_query(sql)
-            # print(len(rows))
-            print("-----------")
+            rows = execute_query(sql)
         time = datetime.now() - start
         detail.update({"label": labels[i], "time": time})
         details.append(detail)
-    print("Completed SQL")
     labels = ["Query without restriction with Redis", "Query with restriction with Redis"]
     redis_labels = ["quakesAll1", "quakesConditional1"]
     sanity = ({})
     for i, sql in enumerate(sqls):
-        print(i)
         detail = ({})
         start = datetime.now()
         for j in range(n_time):
-            print(j)
             rows = r.get(redis_labels[i])
             if rows is None:
-                rows = search_query(sql)
+                print("Used Query")
+                rows = execute_query(sql)
                 r.set(redis_labels[i], str(rows))
-            else:
-                print("Used Redis")
         time = datetime.now() - start
         detail.update({"label": labels[i], "time": time})
         details.append(detail)
@@ -93,20 +85,34 @@ def showTable(data):
 def root():
     return render_template("index.html")
 
-@app.route("/select", methods=['GET'])
-def select():
-    try:
-        rows = search_query("SELECT * FROM earthquakes WHERE depth = -3.5600000000000001;")
-        return showTable(rows)
-    except:
-        return showTable({"Error": "Error in select function"})
+# @app.route("/select", methods=['GET'])
+# def select():
+#     try:
+#         rows = search_query("SELECT * FROM earthquakes WHERE depth = -3.5600000000000001;")
+#         return showTable(rows)
+#     except:
+#         return showTable({"Error": "Error in select function"})
 
-@app.route("/api/timings", methods=['POST'])
+@app.route("/api/timings", methods=['GET'])
 def apiTimings():
-    n_time = int(request.form.get("n_time"))
-    sqls = [str(request.form.get("q1")), str(request.form.get("q2"))]
+    n_time = int(request.args.get("n_time"))
+    sqls = [str(request.args.get("q1")), str(request.args.get("q2"))]
     details = calculate_timings(n_time, sqls)
     return showTable(details)
+
+@app.route("/api/loadData", methods=['GET'])
+def loadData():
+    # Flush Redis Data
+    r.flushall()
+
+    # Delete SQL Table
+    # print((execute_query("TRUNCATE TABLE EARTHQUAKES")))
+
+    start = datetime.now()
+    # Create new table
+
+    # Insert records
+    return render_template("index.html")
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=port, debug=True)
