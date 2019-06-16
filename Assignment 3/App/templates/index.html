@@ -11,6 +11,15 @@
         {% endif %}
         <table>
             <tr>
+                <th> Load Data </th>
+                <td> 
+                    <form action="/api/loadData" method="GET">
+                        <label> To create and load fresh data </label>
+                        <input type = "submit" value="Load now">
+                    </form>
+                </td>
+            </tr>
+            <tr>
                 <th> Calculate timings: </th>
                 <td>
                     <form action="/api/timings" method="GET">

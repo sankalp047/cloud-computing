@@ -95,16 +95,43 @@ def apiTimings():
 
 @app.route("/api/loadData", methods=['GET'])
 def loadData():
-    # Flush Redis Data
-    r.flushall()
+
+    # Delete SQL Table
+    cursor.execute("DROP TABLE earthquakes")
+    cnxn.commit()
 
     start = datetime.now()
-    # Truncate SQL Table
-    cursor.execute("DELETE FROM earthquakes")
+    # Create SQL Table
+    create_table = (
+        'CREATE TABLE earthquakes ( '+
+        'TIME TEXT, '+
+        'LATITUDE FLOAT, '+
+        'LONGITUDE FLOAT, '+
+        'DEPTH FLOAT, '+
+        'MAG FLOAT, '+
+        'MAGTYPE TEXT, '+
+        'NST INT, '+
+        'GAP FLOAT, '+
+        'DMIN FLOAT, '+
+        'RMS FLOAT, '+
+        'NET TEXT, '+
+        'ID TEXT, '+
+        'UPDATED TEXT, '+
+        'PLACE TEXT, '+
+        'TYPE TEXT, '+
+        'HORIZONTALERROR FLOAT, '+
+        'DEPTHERROR FLOAT, '+
+        'MAGERROR FLOAT, '+
+        'MAGNST INT, '+
+        'STATUS TEXT, '+
+        'LOCATIONSOURCE TEXT, '+
+        'MAGSOURCE TEXT '+
+    ');').lower()
+    cursor.execute(create_table.lower())
     cnxn.commit()
     
     # Insert records
-    with open('Files/eqs.csv', newline='') as csvfile:
+    with open('Files/earthquakes.csv', newline='') as csvfile:
         data = list(csv.reader(csvfile))
     
     tsql = "INSERT INTO earthquakes(time,latitude,longitude,depth,mag,magType,nst,gap,dmin,rms,net,id,updated,place,type,horizontalError,depthError,magError,magNst,status,locationSource,magSource) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);"
@@ -114,7 +141,6 @@ def loadData():
     for x in data:
         records.append(tuple(x))
 
-    print("Starting here")
     i = 0
     batch_size = 100
     record_count = len(records)
@@ -133,8 +159,7 @@ def loadData():
 
     time = (datetime.now() - start).total_seconds()
 
-    print("Time taken: "+str(time))
-    return render_template("index.html", msg="Time taken to create the table: "+str(time) + " seconds")
+    return render_template("index.html", msg="Time taken to create the table: "+str(time) + " seconds. Records added: " + str(record_count))
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=port, debug=True)
