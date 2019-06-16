@@ -2,6 +2,7 @@ from flask import Flask, render_template, request
 import os
 import json
 from datetime import datetime
+import csv
 
 # Ref https://www.microsoft.com/en-us/sql-server/developer-get-started/python/mac/step/2.html
 import pyodbc
@@ -27,10 +28,10 @@ app = Flask(__name__)
 port = int(os.getenv('PORT', 8000))
 
 def execute_query(query):
-    try:
-        return cursor.execute(query)
-    except:
-        return {"Error": "Error in search query function"}
+    # try:
+    return cursor.execute(query)
+    # except:
+        # return {"Error": "Error in search query function"}
 
 def search_query(query):
     try:
@@ -85,14 +86,6 @@ def showTable(data):
 def root():
     return render_template("index.html")
 
-# @app.route("/select", methods=['GET'])
-# def select():
-#     try:
-#         rows = search_query("SELECT * FROM earthquakes WHERE depth = -3.5600000000000001;")
-#         return showTable(rows)
-#     except:
-#         return showTable({"Error": "Error in select function"})
-
 @app.route("/api/timings", methods=['GET'])
 def apiTimings():
     n_time = int(request.args.get("n_time"))
@@ -105,14 +98,43 @@ def loadData():
     # Flush Redis Data
     r.flushall()
 
-    # Delete SQL Table
-    # print((execute_query("TRUNCATE TABLE EARTHQUAKES")))
-
     start = datetime.now()
-    # Create new table
-
+    # Truncate SQL Table
+    cursor.execute("DELETE FROM earthquakes")
+    cnxn.commit()
+    
     # Insert records
-    return render_template("index.html")
+    with open('Files/eqs.csv', newline='') as csvfile:
+        data = list(csv.reader(csvfile))
+    
+    tsql = "INSERT INTO earthquakes(time,latitude,longitude,depth,mag,magType,nst,gap,dmin,rms,net,id,updated,place,type,horizontalError,depthError,magError,magNst,status,locationSource,magSource) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);"
+    del data[0]
+
+    records = []
+    for x in data:
+        records.append(tuple(x))
+
+    print("Starting here")
+    i = 0
+    batch_size = 100
+    record_count = len(records)
+    while(True):
+        s = i
+        e = i + batch_size
+        if(s < record_count):
+            if(e > record_count):
+                e = record_count
+            cursor.executemany(tsql, records[s:e])
+            cnxn.commit()
+            print(str(s) + " to " + str(e))
+        else:
+            break
+        i = e
+
+    time = (datetime.now() - start).total_seconds()
+
+    print("Time taken: "+str(time))
+    return render_template("index.html", msg="Time taken to create the table: "+str(time) + " seconds")
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=port, debug=True)
