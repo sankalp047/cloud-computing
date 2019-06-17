@@ -1,21 +1,115 @@
-<html>
+<!DOCTYPE html>
     <head>
         <title> Assignment 3 </title>
+        <style>
+            .label {
+                color: black;
+                font-size: 16px;
+                margin: 10px;
+            }
+            .bar {
+                background-color: aquamarine;
+                height: 16px;
+                font-size: 12px;
+                margin: 4px;
+                text-align: right;
+                overflow: hidden;
+            }
+            #barChartLabels {
+                display: inline-flex;
+                margin: 4px;
+            }
+            .highlightedBar {
+                background-color: blue;
+                color:white
+            }
+            .highlightedLabel {
+                color: blue;
+            }
+        </style>
     </head>
     <body>
         <h2> Assignment 3 </h2>
         <h3> By Naman Jain Vimal Kumar</h3>
         <h3> 1001670153 </h3>
+        {% if msg %}
+            <p> {{ msg }} </p> <br />
+        {% endif %}
         <table>
+            <tr>
+                <th> Load Data </th>
+                <td> 
+                    <form action="/api/loadData" method="GET">
+                        <label> To create and load fresh data </label>
+                        <input type = "submit" value="Load now">
+                    </form>
+                </td>
+            </tr>
             <tr>
                 <th> Calculate timings: </th>
                 <td>
-                    <form action="/api/timings" method="POST">
-                        <label> Number of times to run the timings for: </label><input type="text" name="n_time" value="1000"> <br />
+                    <form action="/api/timings" method="GET">
+                        <label> Number of times to run the timings for: </label><input type="text" name="n_time" value="1000" required> <br /> <br />
+                        <label> Query without restriction: </label><input type="text" name="q1" value="SELECT * FROM earthquakes" size="100" required> <br /> <br />
+                        <label> Query with restriction: </label><input type="text" name="q2" value="SELECT * FROM earthquakes WHERE latitude between -90 and 0" size="100" required> <br /> <br />
                         <input type="submit" value="Click me">
                     </form>
                 </td>
             </tr>
         </table>
+
+        {% if data %}
+            <div style="border-style: solid; padding: 20px">
+                <h3>Query timings</h3>
+                <div id="barChart"> </div>
+                <div id="barChartLabels"> </div>
+                <script src="http://d3js.org/d3.v5.min.js"></script>
+
+                <script>
+
+                    var data = JSON.parse('{{ data | tojson | safe}}')
+                    var labelSelection = d3.select("#barChartLabels")
+                        .selectAll('div')
+                        .data(data)
+                        .enter()
+                        .append('div')
+                        .text(function(d) {
+                            return d.label;
+                        })
+                        .attr('class', 'label')
+                        .on('mouseover', function(d,i) {
+                            highlight(i+1, true)
+                        })
+                        .on('mouseout', function(d,i) {
+                            highlight(i+1, false)
+                        });
+
+                    var barChartSelection = d3.select('#barChart')
+                        .selectAll('div')
+                        .data(data)
+                            .enter()
+                            .append('div')
+                            .style('width', function(d) {
+                                return d.time*100+"px";
+                            })
+                            .attr('class', 'bar')
+                            .text(function(d) {
+                                return d.time + " seconds";
+                            })
+                            .on('mouseover', function(d,i) {
+                                highlight(i+1, true)
+                            })
+                            .on('mouseout', function(d,i) {
+                                highlight(i+1, false)
+                            });
+
+                    var highlight = function(i, action) {
+                        d3.select('#barChart div:nth-child('+i+')').classed("highlightedBar",action);
+                        d3.select('#barChartLabels div:nth-child('+i+')').classed("highlightedLabel",action);
+                    }
+
+                </script>
+            </div>
+        {% endif %}
     </body>
 </html>
