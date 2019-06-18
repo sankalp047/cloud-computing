@@ -3,6 +3,7 @@ import os
 import json
 from datetime import datetime
 import csv
+import random
 
 # Ref https://www.microsoft.com/en-us/sql-server/developer-get-started/python/mac/step/2.html
 import pyodbc
@@ -99,17 +100,25 @@ def magRange():
     details = search_query(query)
     return showTable(details)
 
-@app.route("/api/magRangeTimes", methods=['GET'])
-def magRangeTimes():
-    from_mag = int(request.args.get("from_mag"))
-    to_mag = int(request.args.get("to_mag"))
-    times = int(request.args.get("times"))
-    query = "select place, cast(replace(cast(time as nvarchar(max)),'Z','') as date) as 'date', mag FROM quake3 WHERE mag BETWEEN " + str(from_mag) + " AND " + str(to_mag) 
-    start = datetime.now()
-    for i in range(times):
-        details = execute_query(query)
-    time = (datetime.now() - start).total_seconds()
-    return render_template("index.html", msg = "Time taken to execute the query '" + query + "' " + str(times) + " times: " + str(time) )
+@app.route("/api/magRangeIteration", methods=['GET'])
+def magRangeIteration():
+    from_mag = float(request.args.get("from_mag"))
+    to_mag = float(request.args.get("to_mag"))
+
+    det = []
+    for i in range(42):
+        diff = to_mag - from_mag
+        mag1 = random.random()*diff + from_mag
+        mag2 = random.random()*diff + from_mag
+        l_mag = mag1 if mag1 < mag2 else mag2
+        h_mag = mag1 if mag1 >= mag2 else mag2
+        query = "select place, cast(replace(cast(time as nvarchar(max)),'Z','') as date) as 'date', mag FROM quake3 WHERE mag BETWEEN " + str(l_mag) + " AND " + str(h_mag) 
+        details = search_query(query)
+        if len(details):
+            keys = details[0].keys()
+        det.append({'range': str(l_mag) + " to " + str(h_mag), 'details': details  })
+    
+    return render_template("part2.html", data = det, keys = keys)
 
 
 
