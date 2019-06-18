@@ -10,6 +10,8 @@ import pyodbc
 # Redis
 import redis
 
+tableCreationObject = None
+
 if os.path.isfile('credentials.json'):
     with open('credentials.json') as f:
         cred = json.load(f)
@@ -28,10 +30,10 @@ app = Flask(__name__)
 port = int(os.getenv('PORT', 8000))
 
 def execute_query(query):
-    # try:
-    return cursor.execute(query)
-    # except:
-        # return {"Error": "Error in search query function"}
+    try:
+        return cursor.execute(query)
+    except:
+        return {"Error": "Error in search query function"}
 
 def search_query(query):
     try:
@@ -50,12 +52,13 @@ def calculate_timings(n_time, sqls):
     r.flushall()
     details = []
     labels = ["Query without restriction", "Query with restriction"]
+    if tableCreationObject is not None:
+        details.append(tableCreationObject)
     for i, sql in enumerate(sqls):
         detail = ({})
         start = datetime.now()
         timings = ({})
         for j in range(n_time):
-            # print(sql)
             rows = execute_query(sql)
             timings.update({str(j+1): (datetime.now() - start).total_seconds()})
         time = (datetime.now() - start).total_seconds()
@@ -76,7 +79,6 @@ def calculate_timings(n_time, sqls):
                 r.set(redis_labels[i], str(rows))
             timings.update({str(j+1): (datetime.now() - start).total_seconds()})
         time = (datetime.now() - start).total_seconds()
-        # print(str(timings))
         detail.update({"label": labels[i], "time": time, "timings": timings})
         details.append(detail)
     return details
@@ -97,9 +99,7 @@ def apiTimings():
     n_time = int(request.args.get("n_time"))
     sqls = [str(request.args.get("q1")), str(request.args.get("q2"))]
     details = calculate_timings(n_time, sqls)
-    # print(details)
     return render_template("index.html", data=details)
-    # return showTable(details)
 
 @app.route("/api/loadData", methods=['GET'])
 def loadData():
@@ -166,15 +166,10 @@ def loadData():
         i = e
 
     time = (datetime.now() - start).total_seconds()
+    global tableCreationObject 
+    tableCreationObject = ({'label': 'Creating the table ', 'time':time})
 
     return render_template("index.html", msg="Time taken to create the table: "+str(time) + " seconds. Records added: " + str(record_count))
-
-@app.route("/api/trail", methods=['GET'])
-def apiTrail():
-    # y =  [{label: "First", time: 10}, {label: "Second", time: 30}, {label: "Third", time: 20}]
-    # y =  [{"label": "First", "time": 10}, {"label": "Second", "time": 30}, {"label": "Third", "time": 20}]
-    # print(y)
-    return render_template("trail.html")
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=port, debug=True)
