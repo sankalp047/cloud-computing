@@ -100,27 +100,72 @@ def magRange():
     details = search_query(query)
     return showTable(details)
 
+def dbsearch(from_mag, to_mag, count):
+    det = []
+    for i in range(count):
+        diff = to_mag - from_mag
+        mag1 = round(random.random()*diff + from_mag, 1)
+        mag2 = round(random.random()*diff + from_mag, 1)
+        l_mag = mag1 if mag1 < mag2 else mag2
+        h_mag = mag1 if mag1 >= mag2 else mag2
+        query = "select place, cast(replace(cast(time as nvarchar(max)),'Z','') as date) as 'date', mag FROM quake3 WHERE mag BETWEEN " + str(l_mag) + " AND " + str(h_mag) 
+        start = datetime.now()
+        details = search_query(query)
+        time = (datetime.now() - start).total_seconds()
+        det.append({'from': str(l_mag), 'to': str(h_mag), 'count': len(details), 'time': time})
+    
+    return showTable(det)
+
+def redisSearch(from_mag, to_mag, count):
+
+    det = []
+    for i in range(count):
+        diff = to_mag - from_mag
+        mag1 = round(random.random()*diff + from_mag, 1)
+        mag2 = round(random.random()*diff + from_mag, 1)
+        l_mag = mag1 if mag1 < mag2 else mag2
+        h_mag = mag1 if mag1 >= mag2 else mag2
+        label = "label_"+str(l_mag)+"_to_"+str(h_mag)
+        query = "select place, cast(replace(cast(time as nvarchar(max)),'Z','') as date) as 'date', mag FROM quake3 WHERE mag BETWEEN " + str(l_mag) + " AND " + str(h_mag) 
+        start = datetime.now()
+        rows = r.get(label)
+        if rows is None:
+            print("Used Query")
+            rows = search_query(query)
+            r.set(label, str(rows))
+        time = (datetime.now() - start).total_seconds()
+        det.append({'from': str(l_mag), 'to': str(h_mag), 'count': len(rows), 'time': time})
+    
+    return showTable(det)
+
+
 @app.route("/api/magRangeIteration", methods=['GET'])
 def magRangeIteration():
     from_mag = float(request.args.get("from_mag"))
     to_mag = float(request.args.get("to_mag"))
-
-    det = []
-    for i in range(42):
-        diff = to_mag - from_mag
-        mag1 = random.random()*diff + from_mag
-        mag2 = random.random()*diff + from_mag
-        l_mag = mag1 if mag1 < mag2 else mag2
-        h_mag = mag1 if mag1 >= mag2 else mag2
-        query = "select place, cast(replace(cast(time as nvarchar(max)),'Z','') as date) as 'date', mag FROM quake3 WHERE mag BETWEEN " + str(l_mag) + " AND " + str(h_mag) 
-        details = search_query(query)
-        if len(details):
-            keys = details[0].keys()
-        det.append({'range': str(l_mag) + " to " + str(h_mag), 'details': details  })
+    count = int(request.args.get("count"))
     
-    return render_template("part2.html", data = det, keys = keys)
+    return dbsearch(from_mag, to_mag, count)
+
+@app.route("/api/magRangeIterationRedis", methods=['GET'])
+def magRangeIterationRedis():
+    from_mag = float(request.args.get("from_mag"))
+    to_mag = float(request.args.get("to_mag"))
+    count = int(request.args.get("count"))
+
+    return redisSearch(from_mag, to_mag, count)
 
 
+@app.route("/api/typeoffunction", methods=['GET'])
+def typeoffunction():
+    from_mag = float(request.args.get("from_mag"))
+    to_mag = float(request.args.get("to_mag"))
+    count = int(request.args.get("count"))
+    option = str(request.args.get("option"))
+    if(option == "db"):
+        return dbsearch(from_mag, to_mag, count)
+    else:
+        return redisSearch(from_mag, to_mag, count)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=port, debug=True)

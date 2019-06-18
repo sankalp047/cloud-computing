@@ -33,6 +33,46 @@
                         <label> To: </label>
                         <input type="text" name="to_mag" id = "to_mag" required>
                         <br />
+                        <label> Count: </label>
+                        <input type="text" name="count" id = "count" required>
+                        <br />
+                        <input type="submit" value="submit">
+                    </form>
+                </td>
+            </tr>
+            <tr>
+                <th> Part with Redis </th>
+                <td>
+                    <form action="/api/magRangeIterationRedis" method="GET" >
+                        <label> From: </label>
+                        <input type="text" name="from_mag" id = "from_mag" required>
+                        <br />
+                        <label> To: </label>
+                        <input type="text" name="to_mag" id = "to_mag" required>
+                        <br />
+                        <label> Count: </label>
+                        <input type="text" name="count" id = "count" required>
+                        <br />
+                        <input type="submit" value="submit">
+                    </form>
+                </td>
+            </tr>
+            <tr>
+                <th> Part with Redis </th>
+                <td>
+                    <form action="/api/typeoffunction" method="GET" >
+                        <label> From: </label>
+                        <input type="text" name="from_mag" id = "from_mag" required>
+                        <br />
+                        <label> To: </label>
+                        <input type="text" name="to_mag" id = "to_mag" required>
+                        <br />
+                        <label> Count: </label>
+                        <input type="text" name="count" id = "count" required>
+                        <br />
+                        <label> Option: </label> <br>
+                        <input type="radio" name="option" value="redis"> Redis <br>
+                        <input type="radio" name="option" value="db"> Database <br>
                         <input type="submit" value="submit">
                     </form>
                 </td>
