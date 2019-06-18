@@ -10,6 +10,8 @@ import pyodbc
 # Redis
 import redis
 
+tableCreationObject = None
+
 if os.path.isfile('credentials.json'):
     with open('credentials.json') as f:
         cred = json.load(f)
@@ -28,10 +30,10 @@ app = Flask(__name__)
 port = int(os.getenv('PORT', 8000))
 
 def execute_query(query):
-    # try:
-    return cursor.execute(query)
-    # except:
-        # return {"Error": "Error in search query function"}
+    try:
+        return cursor.execute(query)
+    except:
+        return {"Error": "Error in search query function"}
 
 def search_query(query):
     try:
@@ -50,12 +52,14 @@ def calculate_timings(n_time, sqls):
     r.flushall()
     details = []
     labels = ["Query without restriction", "Query with restriction"]
+    if tableCreationObject is not None:
+        details.append(tableCreationObject)
     for i, sql in enumerate(sqls):
         detail = ({})
         start = datetime.now()
         for j in range(n_time):
             rows = execute_query(sql)
-        time = datetime.now() - start
+        time = (datetime.now() - start).total_seconds()
         detail.update({"label": labels[i], "time": time})
         details.append(detail)
     labels = ["Query without restriction with Redis", "Query with restriction with Redis"]
@@ -70,7 +74,7 @@ def calculate_timings(n_time, sqls):
                 print("Used Query")
                 rows = execute_query(sql)
                 r.set(redis_labels[i], str(rows))
-        time = datetime.now() - start
+        time = (datetime.now() - start).total_seconds()
         detail.update({"label": labels[i], "time": time})
         details.append(detail)
     return details
@@ -158,6 +162,8 @@ def loadData():
         i = e
 
     time = (datetime.now() - start).total_seconds()
+    global tableCreationObject 
+    tableCreationObject = ({'label': 'Creating the table ', 'time':time})
 
     return render_template("index.html", msg="Time taken to create the table: "+str(time) + " seconds. Records added: " + str(record_count))
 
