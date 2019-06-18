@@ -3,30 +3,40 @@
         <title> Quiz 3 </title>
     </head>
     <body>
-        <h2> Quiz 3 </h2>
-        <h3> By Naman Jain Vimal Kumar</h3>
+        <h3> Vimal Kumar, Naman Jain </h3>
         <h3> 1001670153 </h3>
         {% if msg %}
             <p> {{ msg }} </p> <br />
         {% endif %}
         <table>
             <tr>
-                <th> Load Data </th>
-                <td> 
-                    <form action="/api/loadData" method="GET">
-                        <label> To create and load fresh data </label>
-                        <input type = "submit" value="Load now">
+                <th> Mag Range </th>
+                <td>
+                    <form action="/api/magRange" method="GET" >
+                        <label> From: </label>
+                        <input type="text" name="from_mag" id = "from_mag" required>
+                        <br />
+                        <label> To: </label>
+                        <input type="text" name="to_mag" id = "to_mag" required>
+                        <br />
+                        <input type="submit" value="submit">
                     </form>
                 </td>
             </tr>
             <tr>
-                <th> Calculate timings: </th>
+                <th> Part 2 </th>
                 <td>
-                    <form action="/api/timings" method="GET">
-                        <label> Number of times to run the timings for: </label><input type="text" name="n_time" value="1000" required> <br /> <br />
-                        <label> Query without restriction: </label><input type="text" name="q1" value="SELECT * FROM earthquakes" size="100" required> <br /> <br />
-                        <label> Query with restriction: </label><input type="text" name="q2" value="SELECT * FROM earthquakes WHERE latitude between -90 and 0" size="100" required> <br /> <br />
-                        <input type="submit" value="Click me">
+                    <form action="/api/magRangeTimes" method="GET" >
+                        <label> From: </label>
+                        <input type="text" name="from_mag" id = "from_mag" required>
+                        <br />
+                        <label> To: </label>
+                        <input type="text" name="to_mag" id = "to_mag" required>
+                        <br />
+                        <label> Number of times: </label>
+                        <input type="text" name="times" id = "times" required>
+                        <br />
+                        <input type="submit" value="submit">
                     </form>
                 </td>
             </tr>

@@ -91,82 +91,27 @@ def showTable(data):
 def root():
     return render_template("index.html")
 
-@app.route("/api/timings", methods=['GET'])
-def apiTimings():
-    n_time = int(request.args.get("n_time"))
-    sqls = [str(request.args.get("q1")), str(request.args.get("q2"))]
-    details = calculate_timings(n_time, sqls)
+@app.route("/api/magRange", methods=['GET'])
+def magRange():
+    from_mag = int(request.args.get("from_mag"))
+    to_mag = int(request.args.get("to_mag"))
+    query = "select place, cast(replace(cast(time as nvarchar(max)),'Z','') as date) as 'date', mag FROM quake3 WHERE mag BETWEEN " + str(from_mag) + " AND " + str(to_mag) 
+    details = search_query(query)
     return showTable(details)
 
-@app.route("/api/loadData", methods=['GET'])
-def loadData():
-
-    # Delete SQL Table
-    cursor.execute("DROP TABLE earthquakes")
-    cnxn.commit()
-
+@app.route("/api/magRangeTimes", methods=['GET'])
+def magRangeTimes():
+    from_mag = int(request.args.get("from_mag"))
+    to_mag = int(request.args.get("to_mag"))
+    times = int(request.args.get("times"))
+    query = "select place, cast(replace(cast(time as nvarchar(max)),'Z','') as date) as 'date', mag FROM quake3 WHERE mag BETWEEN " + str(from_mag) + " AND " + str(to_mag) 
     start = datetime.now()
-    # Create SQL Table
-    create_table = (
-        'CREATE TABLE earthquakes ( '+
-        'TIME TEXT, '+
-        'LATITUDE FLOAT, '+
-        'LONGITUDE FLOAT, '+
-        'DEPTH FLOAT, '+
-        'MAG FLOAT, '+
-        'MAGTYPE TEXT, '+
-        'NST INT, '+
-        'GAP FLOAT, '+
-        'DMIN FLOAT, '+
-        'RMS FLOAT, '+
-        'NET TEXT, '+
-        'ID TEXT, '+
-        'UPDATED TEXT, '+
-        'PLACE TEXT, '+
-        'TYPE TEXT, '+
-        'HORIZONTALERROR FLOAT, '+
-        'DEPTHERROR FLOAT, '+
-        'MAGERROR FLOAT, '+
-        'MAGNST INT, '+
-        'STATUS TEXT, '+
-        'LOCATIONSOURCE TEXT, '+
-        'MAGSOURCE TEXT '+
-    ');').lower()
-    cursor.execute(create_table.lower())
-    cnxn.commit()
-    
-    # Insert records
-    with open('Files/earthquakes.csv', newline='') as csvfile:
-        data = list(csv.reader(csvfile))
-    
-    tsql = "INSERT INTO earthquakes(time,latitude,longitude,depth,mag,magType,nst,gap,dmin,rms,net,id,updated,place,type,horizontalError,depthError,magError,magNst,status,locationSource,magSource) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);"
-    del data[0]
-
-    records = []
-    for x in data:
-        records.append(tuple(x))
-
-    i = 0
-    batch_size = 100
-    record_count = len(records)
-    while(True):
-        s = i
-        e = i + batch_size
-        if(s < record_count):
-            if(e > record_count):
-                e = record_count
-            cursor.executemany(tsql, records[s:e])
-            cnxn.commit()
-            print(str(s) + " to " + str(e))
-        else:
-            break
-        i = e
-
+    for i in range(times):
+        details = execute_query(query)
     time = (datetime.now() - start).total_seconds()
-    global tableCreationObject 
-    tableCreationObject = ({'label': 'Creating the table ', 'time':time})
+    return render_template("index.html", msg = "Time taken to execute the query '" + query + "' " + str(times) + " times: " + str(time) )
 
-    return render_template("index.html", msg="Time taken to create the table: "+str(time) + " seconds. Records added: " + str(record_count))
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=port, debug=True)
