@@ -1,0 +1,29 @@
+<html>
+    <head>
+        <title> Quiz 3 </title>
+    </head>
+    <body>
+        <h3> <a href="/"> Home </a> </h3>
+        <center>
+            {% if not data %}
+                <p> No Data </p>
+            {% else %}
+                <table>
+                    <tr>
+                        {% for x in keys %}
+                            <th> {{ x }} </th>
+                        {% endfor %}
+                    </tr>
+                    {% for x in data %}
+                        <tr>
+                            {% for y in keys %}
+                                <td> {{ x[y] }} </td>
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                </table>
+            {% endif %}
+        </center>
+        
+    </body>
+</html>

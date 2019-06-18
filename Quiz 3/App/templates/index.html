@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+    <head>
+        <title> Quiz 3 </title>
+    </head>
+    <body>
+        <h2> Quiz 3 </h2>
+        <h3> By Naman Jain Vimal Kumar</h3>
+        <h3> 1001670153 </h3>
+        {% if msg %}
+            <p> {{ msg }} </p> <br />
+        {% endif %}
+        <table>
+            <tr>
+                <th> Load Data </th>
+                <td> 
+                    <form action="/api/loadData" method="GET">
+                        <label> To create and load fresh data </label>
+                        <input type = "submit" value="Load now">
+                    </form>
+                </td>
+            </tr>
+            <tr>
+                <th> Calculate timings: </th>
+                <td>
+                    <form action="/api/timings" method="GET">
+                        <label> Number of times to run the timings for: </label><input type="text" name="n_time" value="1000" required> <br /> <br />
+                        <label> Query without restriction: </label><input type="text" name="q1" value="SELECT * FROM earthquakes" size="100" required> <br /> <br />
+                        <label> Query with restriction: </label><input type="text" name="q2" value="SELECT * FROM earthquakes WHERE latitude between -90 and 0" size="100" required> <br /> <br />
+                        <input type="submit" value="Click me">
+                    </form>
+                </td>
+            </tr>
+        </table>
+
+        <center>
+            {% if data %}
+                <h3> Performance Details </h3>
+                <table>
+                    <tr>
+                        {% for x in keys %}
+                            <th> {{ x }} </th>
+                        {% endfor %}
+                    </tr>
+                    {% for x in data %}
+                        <tr>
+                            {% for y in keys %}
+                                <td> {{ x[y] }} </td>
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                </table>
+            {% endif %}
+        </center>
+    </body>
+</html>
