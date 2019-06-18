@@ -1,7 +1,7 @@
 
 Name: Naman Jain Vimal Kumar
 Last 4 digits ID: 0153  
-Computer IP address:
+Computer IP address: 129.107.80.57
 CSE 6331, Cloud Computing					
 
 
@@ -61,6 +61,8 @@ Show and submit code, when each part is complete, raise your hand and then show 
     AND date and magnitude within that range. 
 
 
+<h3> Vimal Kumar, Naman Jain </h3>
+<h3> 1001670153 </h3>
 <form action="/api/magRange" method="GET" >
    <label> From: </label>
    <input type="text" name="from_mag" id = "from_mag" required>

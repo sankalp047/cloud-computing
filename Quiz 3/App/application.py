@@ -2,7 +2,6 @@ from flask import Flask, render_template, request
 import os
 import json
 from datetime import datetime
-import csv
 import random
 
 # Ref https://www.microsoft.com/en-us/sql-server/developer-get-started/python/mac/step/2.html
@@ -49,37 +48,6 @@ def search_query(query):
         return rows
     except:
         return {"Error": "Error in search query function"}
-
-def calculate_timings(n_time, sqls):
-    r.flushall()
-    details = []
-    labels = ["Query without restriction", "Query with restriction"]
-    if tableCreationObject is not None:
-        details.append(tableCreationObject)
-    for i, sql in enumerate(sqls):
-        detail = ({})
-        start = datetime.now()
-        for j in range(n_time):
-            rows = execute_query(sql)
-        time = (datetime.now() - start).total_seconds()
-        detail.update({"label": labels[i], "time": time})
-        details.append(detail)
-    labels = ["Query without restriction with Redis", "Query with restriction with Redis"]
-    redis_labels = ["quakesAll1", "quakesConditional1"]
-    sanity = ({})
-    for i, sql in enumerate(sqls):
-        detail = ({})
-        start = datetime.now()
-        for j in range(n_time):
-            rows = r.get(redis_labels[i])
-            if rows is None:
-                print("Used Query")
-                rows = execute_query(sql)
-                r.set(redis_labels[i], str(rows))
-        time = (datetime.now() - start).total_seconds()
-        detail.update({"label": labels[i], "time": time})
-        details.append(detail)
-    return details
 
 def showTable(data):
     if len(data) > 0:
