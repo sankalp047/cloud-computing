@@ -2,12 +2,13 @@
     <head>
         <title> Assignment 4 </title>
         <style>
-            .label {
+            /* CSS for bar Graph */
+            .barGraphlabel {
                 color: black;
                 font-size: 16px;
                 margin: 10px;
             }
-            .bar {
+            .barGraphbar {
                 background-color: aquamarine;
                 height: 16px;
                 font-size: 12px;
@@ -20,13 +21,16 @@
                 display: inline-flex;
                 margin: 4px;
             }
-            .highlightedBar {
+            .barGraphhighlightedBar {
                 background-color: blue;
                 color:white
             }
-            .highlightedLabel {
+            .barGraphhighlightedLabel {
                 color: blue;
             }
+
+            /* CSS for Scatter Graph */
+
         </style>
     </head>
     <body>
@@ -58,26 +62,29 @@
                 </td>
             </tr>
         </table>
+        <script src="http://d3js.org/d3.v5.min.js"></script>
 
-        {% if data %}
+        {% if barGraph %}
             <div style="border-style: solid; padding: 20px">
                 <h3>Query timings</h3>
                 <div id="barChart"> </div>
                 <div id="barChartLabels"> </div>
-                <script src="http://d3js.org/d3.v5.min.js"></script>
 
                 <script>
 
-                    var data = JSON.parse('{{ data | tojson | safe}}')
+                    // Bar graph
+                    var barGraph = JSON.parse('{{ barGraph | tojson | safe}}')
+
+                    // Preparing labels for bar graph
                     var labelSelection = d3.select("#barChartLabels")
                         .selectAll('div')
-                        .data(data)
+                        .data(barGraph)
                         .enter()
                         .append('div')
                         .text(function(d) {
                             return d.label;
                         })
-                        .attr('class', 'label')
+                        .attr('class', 'barGraphlabel')
                         .on('mouseover', function(d,i) {
                             highlight(i+1, true)
                         })
@@ -85,15 +92,17 @@
                             highlight(i+1, false)
                         });
 
+                    
+                    // Preparing items for bar graph
                     var barChartSelection = d3.select('#barChart')
                         .selectAll('div')
-                        .data(data)
+                        .data(barGraph)
                             .enter()
                             .append('div')
                             .style('width', function(d) {
                                 return d.time*100+"px";
                             })
-                            .attr('class', 'bar')
+                            .attr('class', 'barGraphbar')
                             .text(function(d) {
                                 return d.time + " seconds";
                             })
@@ -105,8 +114,8 @@
                             });
 
                     var highlight = function(i, action) {
-                        d3.select('#barChart div:nth-child('+i+')').classed("highlightedBar",action);
-                        d3.select('#barChartLabels div:nth-child('+i+')').classed("highlightedLabel",action);
+                        d3.select('#barChart div:nth-child('+i+')').classed("barGraphhighlightedBar",action);
+                        d3.select('#barChartLabels div:nth-child('+i+')').classed("barGraphhighlightedLabel",action);
                     }
 
                 </script>

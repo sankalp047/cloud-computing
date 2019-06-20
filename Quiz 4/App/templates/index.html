@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+    <head>
+        <title> Quiz 3 </title>
+    </head>
+    <body>
+        <h3> Vimal Kumar, Naman Jain </h3>
+        <h3> 1001670153 </h3>
+        {% if msg %}
+            <p> {{ msg }} </p> <br />
+        {% endif %}
+        <table>
+            <tr>
+                <th> Mag Range </th>
+                <td>
+                    <form action="/api/magRange" method="GET" >
+                        <label> From: </label>
+                        <input type="text" name="from_mag" id = "from_mag" required>
+                        <br />
+                        <label> To: </label>
+                        <input type="text" name="to_mag" id = "to_mag" required>
+                        <br />
+                        <input type="submit" value="submit">
+                    </form>
+                </td>
+            </tr>
+            <tr>
+                <th> Part 2 </th>
+                <td>
+                    <form action="/api/magRangeIteration" method="GET" >
+                        <label> From: </label>
+                        <input type="text" name="from_mag" id = "from_mag" required>
+                        <br />
+                        <label> To: </label>
+                        <input type="text" name="to_mag" id = "to_mag" required>
+                        <br />
+                        <label> Count: </label>
+                        <input type="text" name="count" id = "count" required>
+                        <br />
+                        <input type="submit" value="submit">
+                    </form>
+                </td>
+            </tr>
+            <tr>
+                <th> Part with Redis </th>
+                <td>
+                    <form action="/api/magRangeIterationRedis" method="GET" >
+                        <label> From: </label>
+                        <input type="text" name="from_mag" id = "from_mag" required>
+                        <br />
+                        <label> To: </label>
+                        <input type="text" name="to_mag" id = "to_mag" required>
+                        <br />
+                        <label> Count: </label>
+                        <input type="text" name="count" id = "count" required>
+                        <br />
+                        <input type="submit" value="submit">
+                    </form>
+                </td>
+            </tr>
+            <tr>
+                <th> Part with Redis </th>
+                <td>
+                    <form action="/api/typeoffunction" method="GET" >
+                        <label> From: </label>
+                        <input type="text" name="from_mag" id = "from_mag" required>
+                        <br />
+                        <label> To: </label>
+                        <input type="text" name="to_mag" id = "to_mag" required>
+                        <br />
+                        <label> Count: </label>
+                        <input type="text" name="count" id = "count" required>
+                        <br />
+                        <label> Option: </label> <br>
+                        <input type="radio" name="option" value="redis"> Redis <br>
+                        <input type="radio" name="option" value="db"> Database <br>
+                        <input type="submit" value="submit">
+                    </form>
+                </td>
+            </tr>
+        </table>
+
+        <center>
+            {% if data %}
+                <h3> Performance Details </h3>
+                <table>
+                    <tr>
+                        {% for x in keys %}
+                            <th> {{ x }} </th>
+                        {% endfor %}
+                    </tr>
+                    {% for x in data %}
+                        <tr>
+                            {% for y in keys %}
+                                <td> {{ x[y] }} </td>
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                </table>
+            {% endif %}
+        </center>
+    </body>
+</html>

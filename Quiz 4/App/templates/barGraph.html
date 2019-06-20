@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<head>
+    <title> Quiz 4 </title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+    <p>Hello world</p>
+    {% if barGraphVerticalData %}
+        <div id = "barGraphVertical"> </div>
+        <script>
+            var barGraphVerticalData = JSON.parse('{{ barGraphVerticalData | tojson | safe}}')
+            
+            var xValue = []
+            var yValue = []
+            var text = []
+            var yCount = 0
+
+            barGraphVerticalData.map(function(record, i) {
+                xValue.push(record.label);
+                yValue.push(record.value);
+                yCount += record.value;
+            });
+
+            yValue.map(function(y, i) {
+                text.push((y/yCount).toString()+"%")
+            })
+            console.log(xValue);
+            console.log(yValue);
+
+            var trace1 = {
+                x: xValue,
+                y: yValue,
+                type: 'bar',
+                text: text,
+                textposition: 'auto',
+                hoverinfo: 'none',
+                marker: {
+                    color: ['rgb(158,202,225)', 'rgb(255,255,255)', 'rgb(255,255,255)'],
+                    line: {
+                        color: 'rgb(8,48,107)',
+                        width: 1.5
+                    }
+                }
+            };
+
+            var data = [trace1];
+
+            var layout = {
+                title: 'January 2013 Sales Report'
+            };
+
+            Plotly.newPlot('barGraphVertical', data, layout);
+
+        </script>
+    {% endif %}
+
+
+    {% if barGraphHorizontalData %}
+        <div id = "barGraphHorizontal"> </div>
+        <script>
+            var barGraphHorizontalData = JSON.parse('{{ barGraphHorizontalData | tojson | safe}}')
+            
+            var xValue = []
+            var yValue = []
+            var text = []
+            var yCount = 0
+
+            barGraphHorizontalData.map(function(record, i) {
+                xValue.push(record.label);
+                yValue.push(record.value);
+                yCount += record.value;
+            });
+
+            yValue.map(function(y, i) {
+                text.push((y/yCount).toString()+"%")
+            })
+            console.log(xValue);
+            console.log(yValue);
+            
+            var trace1 = {
+                x: yValue,
+                y: xValue,
+                orientation: 'h',
+                type: 'bar',
+                text: text,
+                // textposition: 'auto',
+                // hoverinfo: 'none',
+                marker: {
+                    color: ['rgb(158,202,225)', 'rgb(255,255,255)', 'rgb(255,255,255)'],
+                    line: {
+                        color: 'rgb(8,48,107)',
+                        width: 1.5
+                    }
+                }
+            };
+
+            var data = [trace1];
+
+            var layout = {
+                title: 'January 2013 Sales Report'
+            };
+
+            Plotly.newPlot('barGraphHorizontal', data, layout);
+
+        </script>
+    {% endif %}
+
+    {% if pieChartData %}
+        <div id = "pieChart"> </div>
+        <script>
+            var pieChartData = JSON.parse('{{ pieChartData | tojson | safe}}')
+
+            var data = [{
+                values: [19, 26, 55],
+                labels: ['Residential', 'Non-Residential', 'Utility'],
+                type: 'pie',
+                marker: {
+                    colors: ['rgb(158,202,225)', 'rgb(255,255,255)', 'rgb(255,255,255)']
+                }
+            }];
+
+            var layout = {
+                height: 400,
+                width: 500
+            };
+
+            Plotly.newPlot('pieChart', data, layout);
+
+        </script>
+    {% endif %}
+
+    {% if scatterGraphData %}
+        <div id = "scatterGraph"> </div>
+        <script>
+            var trace1 = {
+                x: [1, 2, 3, 4],
+                y: [10, 15, 13, 17],
+                mode: 'markers',
+                type: 'scatter'
+            };
+
+            var data = [trace1];
+
+            Plotly.newPlot('scatterGraph', data);
+
+        </script>
+
+    {% endif %}
+
+</body>
