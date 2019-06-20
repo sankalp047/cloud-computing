@@ -54,13 +54,79 @@ def showTable(data):
 def root():
     return render_template("index.html")
 
-@app.route("/api/magRange", methods=['GET'])
-def magRange():
-    from_mag = int(request.args.get("from_mag"))
-    to_mag = int(request.args.get("to_mag"))
-    query = "select place, cast(replace(cast(time as nvarchar(max)),'Z','') as date) as 'date', mag FROM quake3 WHERE mag BETWEEN " + str(from_mag) + " AND " + str(to_mag) 
-    details = search_query(query)
+@app.route("/api/first", methods=['GET'])
+def first():
+    query = "select statename from voting WHERE TOTALPOP BETWEEN 5000 and 10000"
+    data = search_query(query)
+    states = []
+    for s in data:
+        states.append(s.get('statename'))
+    details = [{"label": "Between 5 and 10", "states": str(states)}]
+    query = "select statename from voting WHERE TOTALPOP BETWEEN 10000 and 50000"
+    data = search_query(query)
+    states = []
+    for s in data:
+        states.append(s.get('statename'))
+    details.append({"label": "Between 10 and 50", "states":str(states)})
     return showTable(details)
+
+@app.route("/api/second", methods=['GET'])
+def second():
+    n_value = int(request.args.get("n"))
+    query = "select statename, voted/totalpop as per from voting ORDER BY per"
+    data = search_query(query)
+    # labels = []
+    # final_states = []
+    details = []
+    i = 40
+    while(i < 80):
+        j = i+n_value
+        label = str(i) + "-" + str(j)
+        states = []
+        for record in data:
+            percent = float(record['per'])*100
+            if(percent >= i and percent < j):
+                states.append(record['statename'])
+        i = i + n_value
+        details.append({"states": states, "count": len(states), "label": label})
+    return render_template("index.html", pieChartData = details)
+
+
+@app.route("/api/third", methods=['GET'])
+def third():
+    n1 = int(request.args.get("n1"))
+    n2 = int(request.args.get("n2"))
+    details = []
+    i = n1
+    while(i <= n2):
+        x = i
+        y = (i*i)+1
+        print(y)
+        details.append({"x": x, "y": y})
+        i = i+1
+    return render_template("index.html", scatterGraphData = details)
+
+@app.route("/api/forth", methods=['GET'])
+def forth():
+    n_value = int(request.args.get("n"))
+    query = "select statename, registered from voting ORDER BY registered"
+    data = search_query(query)
+    details = []
+    i = 0
+    end = 17
+    while(i <= end):
+        print(i)
+        j = i+n_value
+        label = str(i) + "-" + str(j) + " million"
+        states = []
+        for record in data:
+            r = float(record['registered'])/1000
+            print(r)
+            if(r >= i and r < j):
+                states.append(record['statename'])
+        i = i + n_value
+        details.append({"states": states, "count": len(states), "label": label})
+    return render_template("index.html", barGraphVerticalData = details)
 
 def dbsearch(from_mag, to_mag, count):
     det = []

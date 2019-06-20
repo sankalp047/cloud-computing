@@ -1,6 +1,7 @@
 <!DOCTYPE html>
     <head>
-        <title> Quiz 3 </title>
+        <title> Quiz 4 </title>
+        <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     </head>
     <body>
         <h3> Vimal Kumar, Naman Jain </h3>
@@ -10,93 +11,153 @@
         {% endif %}
         <table>
             <tr>
-                <th> Mag Range </th>
-                <td>
-                    <form action="/api/magRange" method="GET" >
-                        <label> From: </label>
-                        <input type="text" name="from_mag" id = "from_mag" required>
-                        <br />
-                        <label> To: </label>
-                        <input type="text" name="to_mag" id = "to_mag" required>
-                        <br />
-                        <input type="submit" value="submit">
+                <th> Total Population </th>
+                <td> 
+                    <form action="/api/first" method="GET">
+                        <input type = "submit" value = "Find now">
                     </form>
                 </td>
             </tr>
             <tr>
-                <th> Part 2 </th>
-                <td>
-                    <form action="/api/magRangeIteration" method="GET" >
-                        <label> From: </label>
-                        <input type="text" name="from_mag" id = "from_mag" required>
-                        <br />
-                        <label> To: </label>
-                        <input type="text" name="to_mag" id = "to_mag" required>
-                        <br />
-                        <label> Count: </label>
-                        <input type="text" name="count" id = "count" required>
-                        <br />
-                        <input type="submit" value="submit">
+                <th> Pir Chart </th>
+                <td> 
+                    <form action="/api/second" method="GET">
+                        <input type="text" name="n" id = "n" required>
+                        <input type = "submit" value = "Find now">
                     </form>
                 </td>
             </tr>
             <tr>
-                <th> Part with Redis </th>
-                <td>
-                    <form action="/api/magRangeIterationRedis" method="GET" >
-                        <label> From: </label>
-                        <input type="text" name="from_mag" id = "from_mag" required>
-                        <br />
-                        <label> To: </label>
-                        <input type="text" name="to_mag" id = "to_mag" required>
-                        <br />
-                        <label> Count: </label>
-                        <input type="text" name="count" id = "count" required>
-                        <br />
-                        <input type="submit" value="submit">
+                <th> Scatter Chart </th>
+                <td> 
+                    <form action="/api/third" method="GET">
+                        <input type="text" name="n1" id = "n1" required>
+                        <input type="text" name="n2" id = "n2" required>
+                        <input type = "submit" value = "Find now">
                     </form>
                 </td>
             </tr>
             <tr>
-                <th> Part with Redis </th>
-                <td>
-                    <form action="/api/typeoffunction" method="GET" >
-                        <label> From: </label>
-                        <input type="text" name="from_mag" id = "from_mag" required>
-                        <br />
-                        <label> To: </label>
-                        <input type="text" name="to_mag" id = "to_mag" required>
-                        <br />
-                        <label> Count: </label>
-                        <input type="text" name="count" id = "count" required>
-                        <br />
-                        <label> Option: </label> <br>
-                        <input type="radio" name="option" value="redis"> Redis <br>
-                        <input type="radio" name="option" value="db"> Database <br>
-                        <input type="submit" value="submit">
+                <th> Bar Chart </th>
+                <td> 
+                    <form action="/api/forth" method="GET">
+                        <input type="text" name="n" id = "n" required>
+                        <input type = "submit" value = "Find now">
                     </form>
                 </td>
             </tr>
         </table>
 
-        <center>
-            {% if data %}
-                <h3> Performance Details </h3>
-                <table>
-                    <tr>
-                        {% for x in keys %}
-                            <th> {{ x }} </th>
-                        {% endfor %}
-                    </tr>
-                    {% for x in data %}
-                        <tr>
-                            {% for y in keys %}
-                                <td> {{ x[y] }} </td>
-                            {% endfor %}
-                        </tr>
-                    {% endfor %}
-                </table>
-            {% endif %}
-        </center>
+        {% if pieChartData %}
+            <div id = "pieChart" width="70%" height="90%"> </div>
+            <script>
+                var pieChartData = JSON.parse('{{ pieChartData | tojson | safe}}')
+
+                var count = []
+                var labels = []
+                var states = []
+
+                pieChartData.map(function(d) {
+                    count.push(d.count)
+                    labels.push(d.label)
+                    states.push(d.state)
+                })
+
+                var data = [{
+                    values: count,
+                    text: labels,
+                    type: 'pie',
+                    labels: labels,
+                    hovertext: states
+                }];
+
+                var layout = {
+                    height: "70%",
+                    width: "90%"
+                };
+
+                Plotly.newPlot('pieChart', data, layout);
+
+            </script>
+        {% endif %}
+
+
+
+        {% if scatterGraphData %}
+            <div id = "scatterGraph"> </div>
+            <script>
+                    var scatterGraphData = JSON.parse('{{ scatterGraphData | tojson | safe}}')
+
+                var x = []
+                var y = []
+
+                scatterGraphData.map(function(d) {
+                    x.push(d.x)
+                    y.push(d.y)
+                })
+                console.log(x)
+                var trace1 = {
+                    x: y,
+                    y: x,
+                    mode: 'markers',
+                    type: 'scatter'
+                };
+
+                var data = [trace1];
+
+                Plotly.newPlot('scatterGraph', data);
+
+            </script>
+
+        {% endif %}
+
+        {% if barGraphVerticalData %}
+        <div id = "barGraphVertical"> </div>
+        <script>
+            var barGraphVerticalData = JSON.parse('{{ barGraphVerticalData | tojson | safe}}')
+            
+            var xValue = []
+            var yValue = []
+            var text = []
+            var yCount = 0
+
+            barGraphVerticalData.map(function(record, i) {
+                xValue.push(record.label);
+                yValue.push(record.count);
+                yCount += record.value;
+            });
+
+            yValue.map(function(y, i) {
+                text.push((y/yCount).toString()+"%")
+            })
+            console.log(xValue);
+            console.log(yValue);
+
+            var trace1 = {
+                x: xValue,
+                y: yValue,
+                type: 'bar',
+                text: yCount,
+                textposition: 'auto',
+                hoverinfo: 'none',
+                marker: {
+                    color: ['rgb(158,202,225)', 'rgb(255,255,255)', 'rgb(255,255,255)'],
+                    line: {
+                        color: 'rgb(8,48,107)',
+                        width: 1.5
+                    }
+                }
+            };
+
+            var data = [trace1];
+
+            var layout = {
+                title: 'None'
+            };
+
+            Plotly.newPlot('barGraphVertical', data, layout);
+
+        </script>
+    {% endif %}
     </body>
 </html>
