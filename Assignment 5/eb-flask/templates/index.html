@@ -1,6 +1,7 @@
 <!DOCTYPE html>
     <head>
         <title> Assignment 4 </title>
+        <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     </head>
     <body>
         <h1> Hello world </h1>
@@ -34,6 +35,74 @@
                 </td>
             </tr>
         </table>
+        <br /> <br />
+        {% if clusters %}
+            <table>
+                <caption> Cluster Details </caption>
+                <tr> 
+                    <th> Index </th>
+                    <th> Centroid ({{ clusters['cluster_attributes'] }})</th>
+                    <th> Distance </th>
+                    <th> Count </th>
+                </tr>
+                {% for x in clusters['cluster_details'] %}
+                    <tr>
+                        <td> {{ x['index'] }} </td>
+                        <td> {{ x['Centroid'] }} </td>
+                        <td> {{ x['Distance'] }} </td>
+                        <td> {{ x['Count'] }} </td>
+                    </tr>
+                {% endfor %}
+            </table>
+
+
+            <div id = "scatterGraph"> </div>
+            <script> var data = []; </script>
+            {% if clusters['attr_count'] == 2 %}
+                {% for c in clusters['cluster_details'] %}                    
+                    <script>
+                        var index = '{{ c["index"] }}'
+                        var scatterGraphData = JSON.parse('{{ c["Points"] | tojson | safe }}');
+                        var trace = {
+                            x: scatterGraphData['x'],
+                            y: scatterGraphData['y'],
+                            mode: 'markers',
+                            type: 'scatter',
+                            name: "Cluster "+ index
+                        };
+                        // console.log("Cluster "+ {{ c["index"] }})
+
+                        data.push(trace);
+
+                    </script>
+                {% endfor %}
+            {% endif %}
+
+            <script>
+                var centroids = JSON.parse('{{ clusters["cluster_centroids"] | tojson | safe }}');
+                var x = [];
+                var y = [];
+                var text = [];
+                centroids.map(function(c, i){
+                    x.push(c[0]);
+                    y.push(c[1]);
+                    text.push("Cluster "+(i+1));
+                });
+                var trace = {
+                    x: x,
+                    y: y,
+                    mode: 'markers',
+                    type: 'scatter',
+                    name: "Centroids",
+                    text: text
+                };
+
+                data.push(trace);
+
+            </script>
+
+            <script> Plotly.newPlot('scatterGraph', data); </script>
+        {% endif %}
 
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
         <script>
