@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+    <head>
+        <title> Assignment 5 </title>
+        <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    </head>
+    <body>
+        <h1> Vimal Kumar, Naman Jain </h1>
+        <h1> 1001670153 </h1>
+        <table>
+            <tr>
+                <th> Clustering </th>
+                <td>
+                    <form action="/api/clustering" method="POST">
+                        <b> <label> Number of Clusters: </label> </b>
+                        <input type="text" id="cluster_count" name="cluster_count" required> <br />
+                        <b> <label> Select clustering attributes </label> </b> <br />
+                        <input type="checkbox" name="clusters" value="pclass"> P Class <br />
+                        <input type="checkbox" name="clusters" value="survived"> Survived <br />
+                        <input type="checkbox" name="clusters" value="name"> Name <br />
+                        <input type="checkbox" name="clusters" value="sex"> Sex <br />
+                        <input type="checkbox" name="clusters" value="age"> Age <br />
+                        <input type="checkbox" name="clusters" value="sibsp"> Sibsp <br />
+                        <input type="checkbox" name="clusters" value="parch"> Parch <br />
+                        <input type="checkbox" name="clusters" value="ticket"> Ticket <br />
+                        <input type="checkbox" name="clusters" value="fare"> Fare <br />
+                        <input type="checkbox" name="clusters" value="cabin"> Cabin <br />
+                        <input type="checkbox" name="clusters" value="embarked"> Embarked <br />
+                        <input type="checkbox" name="clusters" value="boat"> Boat <br />
+                        <input type="checkbox" name="clusters" value="body"> Body <br />
+                        <input type="checkbox" name="clusters" value="home.dest"> Home.Dest <br />
+                        <br />
+                        <b> <label> Checked Array: </label> </b> <br />
+                        <input type="text" name="checked" id="checked" readonly>
+                        <button type="submit" value="Clusterize"> Submit </button>
+                    </form>
+                </td>
+            </tr>
+        </table>
+        <br /> <br />
+        {% if clusters %}
+            {% if clusters['rules'] %}
+                <table> 
+                    <caption> Rules for string values [Range 0-1] </caption>
+                    <tr> 
+                        <th> Attribute Name </th>
+                        <th> Classes from 0 - 1 </th>
+                    </tr>
+                    {% for x in clusters['rules'] %}
+                        <tr>
+                            <td> {{ x['Attribute'] }}</td>
+                            <td> {{ x['Classes'] }}</td>
+                        </tr>
+                    {% endfor %}
+                </table>
+            {% endif %}
+            <table>
+                <caption> Cluster Details </caption>
+                <tr> 
+                    <th> Index </th>
+                    <th> Centroid ({{ clusters['cluster_attributes'] }})</th>
+                    <th> Average Distance </th>
+                    <th> Count </th>
+                </tr>
+                {% for x in clusters['cluster_details'] %}
+                    <tr>
+                        <td> {{ x['index'] }} </td>
+                        <td> {{ x['Centroid'] }} </td>
+                        <td> {{ x['Distance'] }} </td>
+                        <td> {{ x['Count'] }} </td>
+                    </tr>
+                {% endfor %}
+            </table>
+
+
+            {% if clusters['attr_count'] == 2 %}
+
+                <div id = "scatterGraph"> </div>
+                <script> var data = []; </script>
+                {% for c in clusters['cluster_details'] %}                    
+                    <script>
+                        var index = '{{ c["index"] }}'
+                        var scatterGraphData = JSON.parse('{{ c["Points"] | tojson | safe }}');
+                        var trace = {
+                            x: scatterGraphData['x'],
+                            y: scatterGraphData['y'],
+                            mode: 'markers',
+                            type: 'scatter',
+                            name: "Cluster "+ index
+                        };
+                        // console.log("Cluster "+ {{ c["index"] }})
+
+                        data.push(trace);
+
+                    </script>
+                {% endfor %}
+
+                <script>
+                    var centroids = JSON.parse('{{ clusters["cluster_centroids"] | tojson | safe }}');
+                    var x = [];
+                    var y = [];
+                    var text = [];
+                    centroids.map(function(c, i){
+                        x.push(c[0]);
+                        y.push(c[1]);
+                        text.push("Cluster "+(i+1));
+                    });
+                    var trace = {
+                        x: x,
+                        y: y,
+                        mode: 'markers',
+                        type: 'scatter',
+                        name: "Centroids",
+                        text: text
+                    };
+    
+                    data.push(trace);
+    
+                </script>
+    
+                <script> Plotly.newPlot('scatterGraph', data); </script>
+            {% endif %}
+        {% endif %}
+
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+        <script>
+            $(document).ready(function(even){
+                $("button").click(function(){
+                var checkvalue = [];
+                $.each($("input[name='clusters']:checked"), function(){            
+                    checkvalue.push($(this).val());
+                });
+                var checkedArrayValues = document.getElementById("checked");
+                checkedArrayValues.value = checkvalue.toString();
+            });
+            });
+        </script>
+
+    </body>
+</html>
