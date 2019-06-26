@@ -1,0 +1,228 @@
+
+Name: Naman Jain Vimal Kumar  
+Last 4 digits ID: 0153
+Computer IP address:
+CSE 6331, Cloud Computing					
+
+
+Quiz Q5, 3.30, Summer 2019   (c) DL, UTA, 2019
+
+
+  C&P means cut and paste only those relevant lines from your program(s) into this quiz.
+
+
+ 1.  I understand that I am on my honor during this quiz, I will not collaborate, use 
+     non-allowed sources, and I will not discuss or share this quiz with anyone for the next 
+     12 hours.
+     You MAY: use Google to search, use previous source code, 
+     YOU MAY NOT use:
+     Email, Facebook, Hangouts, IM, chats, Skype or ANY other human connection.
+
+     This is a timed test. Late tests will have points deducted for being late.
+     Very late tests will not be graded.
+
+     When you are complete, with any part, please raise your hand, so we may visually inspect that part.
+
+     The second part of the test, you should electronically submit, you will need to copy and paste 
+     only those lines of code to implement that part of the test, usually a few (two to eight) lines of code. 
+     Place it immediately after the question.
+
+     Submit this Quiz (renamed) with code cut and pasted, ONLY text. DO NOT submit zips, binaries, libraries,
+     or anything other than text.
+
+     When any parts(questions) are complete complete, submit this test, you may make multiple submissions.
+
+     If you have computer, or other, problems, please raise your hand immediately.
+
+     If you understand and agree, please initial here:
+     _________________
+
+ 2. Get files from this same folder.
+   
+ 3. Name your program/submission with your name and last digits of your ID.
+
+ 4. Using the cloud services provider, all functionality possible should be implemented on that provider.
+    (Of course, displaying web pages through a browser and the user interface is "local")
+    The cloud service provider is AWS.
+
+ 4+ In order to give as many people the opportunity to demo in the last few minutes, you may only demo ONE Question in the
+    last 5 minutes of the quiz time or for the few minutes afterward. 
+
+ 4++ Missing data is not available, and should not be considered to be zero.
+  
+Show and submit code, when each part is complete, raise your hand and then show us:
+
+ 5. Using k-means clustering, find: 
+       first: 4 clusters based on columns Age and Height.
+       Show, in textual form, time to run, centroids for the clusters, and number of points in each cluster. 
+       then: 3 clusters based on CabinNum and Fare.
+       Show, in textual form, time to run, centroids for the clusters, and number of points in each cluster. 
+       Display both results on the same web page.
+       (no "visualizing", no graphing necessary).
+def myClusterDetails(cluster_count, clusters, r):
+    kmeans = KMeans(n_clusters=cluster_count, random_state=0).fit(r)
+    cluster_details = getTableValues(r, kmeans.cluster_centers_, kmeans.labels_)
+    return cluster_details
+
+
+    start = datetime.now()
+    q1 = "SELECT age, height from minnow WHERE age is not null and height is not null"
+    r1 = execute_query(q1)
+    c1 = myClusterDetails(4, ['age', 'height'], np.array(r1))
+    time = (datetime.now() - start).total_seconds()
+    objs.append({'cluster_details': c1, 'title': "Cluster for age, height", "time": str(time)})
+
+    start = datetime.now()
+    q2 = "SELECT cabinnum, fare from minnow WHERE cabinnum is not null and fare is not null"
+    r2 = execute_query(q2)
+    c2 = myClusterDetails(3, ['cabinnum', 'fare'], np.array(r2))
+    time = (datetime.now() - start).total_seconds()
+    objs.append({'cluster_details': c2, 'title': "Cluster for cabin num, fare", "time": str(time)})
+    return render_template("index.html", part1 = objs)
+
+ 6. Create a web form that allows a user to choose the number of clusters to find, and select any two attributes
+    (columns) from CabinNum, Lat, Age, Wealth, Education and fare and show, the results, in textual form: 
+    centroids, and list the number of points in each cluster. 
+    Also show the maximum distance (how tightly packed) between all points in each cluster (in a table).
+    (For example a user may enter 10 as the number of clusters to find, and may select age and fare as the two attributes.)
+
+def getTableValues(data, clusters, labels):
+    cluster_details = []
+    cluster_count = np.shape(clusters)[0]
+    for i in range(cluster_count):
+        this_cluster_indices = np.where(labels == i)
+        this_cluster_points = data[this_cluster_indices,:]
+        this_count = np.shape(this_cluster_points)[1]
+        this_distance = (np.max(np.sqrt(np.sum((this_cluster_points - clusters[i,:])**2, axis=1))))/this_count
+        this_details = {
+            "index": i + 1,
+            "Centroid": str(clusters[i,:]), 
+            "Distance": str(this_distance), 
+            "Count": this_count,
+            "Points": {
+                "x": this_cluster_points[0,:,0].tolist(), 
+                "y": this_cluster_points[0,:,1].tolist(),
+            }
+        }
+        cluster_details.append(this_details)
+
+    rules = []
+    d = np.array(records)
+    r = copy.deepcopy(d)
+    for i in string_columns:
+        label_encoder = LabelEncoder()
+        r[:,i] = label_encoder.fit_transform(d[:,i])
+        rules.append({"Attribute": clusters[i], "Classes": str(label_encoder.classes_)})
+    r = r.astype(np.float)
+
+    kmeans = KMeans(n_clusters=cluster_count, random_state=0).fit(r)
+    cluster_details = getTableValues(r, kmeans.cluster_centers_, kmeans.labels_)
+    cluster_attributes = request.form.get("checked")
+
+    barGraph = []
+    for x in cluster_details:
+        label = (x['Centroid']),
+        count = (x['Count']),
+        barGraph.append({"label": label, "count": count})
+
+    return render_template("index.html", clusters={
+        "cluster_details": cluster_details,
+        "cluster_attributes": cluster_attributes,
+        "attr_count": len(clusters),
+        "cluster_centroids": kmeans.cluster_centers_.tolist(),
+        "rules": rules
+    }, barGraph = barGraph)
+
+ 7. On a web form, a user will give a centroid (location) and you will show the name of ANY passenger in that cluster, 
+    and that passengers name, age, wealth, cabin and survival.
+
+    wealth = str(request.form.get("wealth"))
+    age = str(request.form.get("age"))
+    # wealth = int(request.form.get("wealth"))
+    # cabin = int(request.form.get("cabin"))
+    c_count = int(request.form.get("c_count"))
+    selected_attributes = []
+    index = []
+    selected_values = []
+    if len(age) != 0:
+        index.append(1)
+        selected_attributes.append('age')
+        selected_values.append(int(age))
+    if len(wealth) != 0:
+        index.append(2)
+        selected_attributes.append('wealth')
+        selected_values.append(int(wealth))
+    # if len(wealth) != 0:
+    #     index.append(2)
+    #     selected_attributes.append('wealth')
+    #     selected_values.append(wealth)
+    # if len(cabin) != 0:
+    #     index.append(3)
+    #     selected_attributes.append('cabin')
+    #     selected_values.append(cabin)
+
+    attributes = str(selected_attributes)
+    q = "SELECT fname, age, wealth, cabinnum, survived FROM minnow WHERE "
+    for i, c in enumerate(selected_attributes):
+        if c in string_attributes:
+            string_columns.append(i)
+        q += " " + str(c) + " IS NOT NULL AND"
+    q = q[:len(q)-3]
+    print(q)
+    records = execute_query(q)
+    r = np.array(records)
+    print(index)
+    d = copy.deepcopy(r[:,index])
+    print(d)
+    kmeans = KMeans(n_clusters=c_count, random_state=0).fit(d)
+
+    o = kmeans.predict([np.array(selected_values)])
+    this_cluster_indices = np.where(kmeans.labels_ == o.tolist())
+    print(this_cluster_indices)
+    this_cluster_point = r[this_cluster_indices,:]
+
+    render_template("index.html", partfour = this_cluster_point)
+
+ 8. Bonus:
+    Using what was done in question 6, showing the same web form, please show a page,
+    followed by a either a pie chart or a vertical bar chart on that page, which is at least 80 percent the width of the screen, 
+    which has, as a label, the centroid of a cluster, and is proportional to the number of points in that cluster.
+    That is: each bar or pie slice should have a label for the centroid of that cluster, and it's size is relative to he number of points 
+    in that cluster.
+    Each bar or pie slice should be in a different color, please show labels inside or to the right of each bar, 
+    or inside or adjacent to each pie slice.
+ 
+<div id = "pieChart" width="80%"> </div>
+            <script>
+                var pieChartData = JSON.parse('{{ barGraph | tojson | safe}}')
+                var count = []
+                var labels = []
+                // var states = []
+
+                pieChartData.map(function(d) {
+                    count.push(d.count[0])
+                    labels.push(d.label[0])
+                    // states.push(d.state)
+                })
+
+                var data = [{
+                    values: count,
+                    text: labels,
+                    type: 'pie',
+                    labels: labels,
+                    // hovertext: states
+                }];
+
+                var layout = {
+                    height: "70%",
+                    width: "100%"
+                };
+
+                Plotly.newPlot('pieChart', data, layout);
+
+
+ 9. Show GTA parts 5, 6, 7, 8(if done)
+
+ 10. When complete, return (send) this quiz
+     If you finish early, send this immediately, otherwise send between
+     the end of class and no more than 1 minute after that.

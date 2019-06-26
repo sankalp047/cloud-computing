@@ -14,24 +14,46 @@
                         <b> <label> Number of Clusters: </label> </b>
                         <input type="text" id="cluster_count" name="cluster_count" required> <br />
                         <b> <label> Select clustering attributes </label> </b> <br />
-                        <input type="checkbox" name="clusters" value="pclass"> P Class <br />
-                        <input type="checkbox" name="clusters" value="survived"> Survived <br />
-                        <input type="checkbox" name="clusters" value="name"> Name <br />
-                        <input type="checkbox" name="clusters" value="sex"> Sex <br />
-                        <input type="checkbox" name="clusters" value="age"> Age <br />
-                        <input type="checkbox" name="clusters" value="sibsp"> Sibsp <br />
-                        <input type="checkbox" name="clusters" value="parch"> Parch <br />
-                        <input type="checkbox" name="clusters" value="ticket"> Ticket <br />
-                        <input type="checkbox" name="clusters" value="fare"> Fare <br />
-                        <input type="checkbox" name="clusters" value="cabin"> Cabin <br />
-                        <input type="checkbox" name="clusters" value="embarked"> Embarked <br />
-                        <input type="checkbox" name="clusters" value="boat"> Boat <br />
-                        <input type="checkbox" name="clusters" value="body"> Body <br />
-                        <input type="checkbox" name="clusters" value="home.dest"> Home.Dest <br />
+                        <input type="checkbox" name="clusters" value="0"> Cabin Number <br />
+                        <input type="checkbox" name="clusters" value="1"> First Name <br />
+                        <input type="checkbox" name="clusters" value="2"> Last Name <br />
+                        <input type="checkbox" name="clusters" value="3"> Age <br />
+                        <input type="checkbox" name="clusters" value="4"> Height <br />
+                        <input type="checkbox" name="clusters" value="5"> Education <br />
+                        <input type="checkbox" name="clusters" value="6"> Wealth <br />
+                        <input type="checkbox" name="clusters" value="7"> Survived <br />
+                        <input type="checkbox" name="clusters" value="8"> Lat <br />
+                        <input type="checkbox" name="clusters" value="9"> Long <br />
+                        <input type="checkbox" name="clusters" value="10"> Fare <br />
                         <br />
                         <b> <label> Checked Array: </label> </b> <br />
                         <input type="text" name="checked" id="checked" readonly>
                         <button type="submit" value="Clusterize"> Submit </button>
+                    </form>
+                </td>
+            </tr>
+            <tr>
+                <td> First Part </td>
+                <td>
+                    <form action = "/api/first" method = "POST">
+                        <input type="submit" value="Click here"> 
+                    </form>
+                </td>
+            </tr>
+            <tr>
+                <td> First Three </td>
+                <td>
+                    <form action = "/api/three" method = "POST">
+                        <label> wealth </label>
+                        <input type="text" name="wealth" value="0"> <br />
+                        <label> age </label>
+                        <input type="text" name="age"> <br />
+                        <!-- <label> cabin </label> . -->
+                        <!-- <label> survival </label>
+                        <input type="text" name="survival"> <br /> -->
+                        <label> Cluster Count </label>
+                        <input type="text" name="c_count" required> <br />
+                        <input type="submit" value="Click here"> 
                     </form>
                 </td>
             </tr>
@@ -58,8 +80,9 @@
                 <tr> 
                     <th> Index </th>
                     <th> Centroid ({{ clusters['cluster_attributes'] }})</th>
-                    <th> Average Distance </th>
+                    <th> Max Distance </th>
                     <th> Count </th>
+                    <th> Sample Record </th>
                 </tr>
                 {% for x in clusters['cluster_details'] %}
                     <tr>
@@ -67,6 +90,7 @@
                         <td> {{ x['Centroid'] }} </td>
                         <td> {{ x['Distance'] }} </td>
                         <td> {{ x['Count'] }} </td>
+                        <td> <a href=" " title="{{ x['SampleRecord'] }}"> See example </a></td>
                     </tr>
                 {% endfor %}
             </table>
@@ -119,20 +143,82 @@
     
                 <script> Plotly.newPlot('scatterGraph', data); </script>
             {% endif %}
+
+            {% if barGraph %}
+            <div id = "pieChart"> </div>
+            <script>
+                var pieChartData = JSON.parse('{{ barGraph | tojson | safe}}')
+                var count = []
+                var labels = []
+                // var states = []
+
+                pieChartData.map(function(d) {
+                    count.push(d.count[0])
+                    labels.push(d.label[0])
+                    // states.push(d.state)
+                })
+
+                var data = [{
+                    values: count,
+                    text: labels,
+                    type: 'pie',
+                    labels: labels,
+                    // hovertext: states
+                }];
+
+                var layout = {
+                    width: 1120,
+                    height: 720
+                };
+
+                Plotly.newPlot('pieChart', data, layout);
+
+            </script>
+            {% endif %}
+        {% endif %}
+        
+
+        {% if part1 %}
+            {% for z in part1 %}
+                <br />
+                <p> Time taken: {{ z['time'] }} </p>
+                <table>
+                    <caption> {{ z['title'] }} </caption>
+                    <tr> 
+                        <th> Index </th>
+                        <th> Centroid </th>
+                        <th> Max Distance </th>
+                        <th> Count </th>
+                    </tr>
+                    {% for x in z['cluster_details'] %}
+                        <tr>
+                            <td> {{ x['index'] }} </td>
+                            <td> {{ x['Centroid'] }} </td>
+                            <td> {{ x['Distance'] }} </td>
+                            <td> {{ x['Count'] }} </td>
+                        </tr>
+                    {% endfor %}
+                </table> 
+            {% endfor %}
         {% endif %}
 
+        
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
         <script>
             $(document).ready(function(even){
                 $("button").click(function(){
-                var checkvalue = [];
-                $.each($("input[name='clusters']:checked"), function(){            
-                    checkvalue.push($(this).val());
+                    var checkvalue = [];
+                    $.each($("input[name='clusters']:checked"), function(){            
+                        checkvalue.push($(this).val());
+                    });
+                    var checkedArrayValues = document.getElementById("checked");
+                    checkedArrayValues.value = checkvalue.toString();
                 });
-                var checkedArrayValues = document.getElementById("checked");
-                checkedArrayValues.value = checkvalue.toString();
             });
-            });
+
+            function showText(msg) {
+                console.log(msg)
+            }
         </script>
 
     </body>
