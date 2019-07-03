@@ -13,6 +13,9 @@
         <h1> Vimal Kumar, Naman Jain </h1>
         <h1> 1001670153 </h1>
 
+        {% if msg %}
+            <p style="color: blue;"> {{ msg }} </p>
+        {% endif %}
 
         {% if tables %}
             {% for x in tables %}
