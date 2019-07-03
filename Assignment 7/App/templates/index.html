@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+    <head>
+        <title> Assignment 6-7 </title>
+        <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+        <style>
+            table, th, td {
+                border: 1px solid black;
+                padding: 3px;
+            }
+        </style>
+    </head>
+    <body>
+        <h1> Vimal Kumar, Naman Jain </h1>
+        <h1> 1001670153 </h1>
+
+
+        {% if tables %}
+            {% for x in tables %}
+                {% if x.records.length == 0 %}
+                    <p> {{ x.title }} table is empty </p>
+                {% else %}
+                    <table style="border-collapse: collapse">
+                        <caption> {{x.title}} </caption>
+                        <tr>
+                            {% for table_key in x.records[0].keys() %}
+                                <th> {{ table_key }} </th>
+                            {% endfor %}
+                        </tr>
+                        {% for record in x.records %}
+                            <tr>
+                                {% for table_key in x.records[0].keys() %}
+                                    <td> {{ record[table_key] }} </td>
+                                {% endfor %}
+                            </tr>
+                        {% endfor %}
+                    </table>
+                {% endif %}
+                <br />
+            {% endfor %}
+        {% endif %}
+    </body>
+</html>

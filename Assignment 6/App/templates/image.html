@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<head>
+    <title> Quiz 6 </title>
+</head>
+<body>
+    <h1> CSE 6331 3:30 </h1>
+    {% if times %}  
+        <p> Start Time: {{ times['start'] }}</p> <br />
+        <p> End Time: {{ times['end'] }}</p> <br />
+        <p> Elapsed Time: {{ times['elapsed'] }}</p> <br />
+        <center>
+            {% if times['x'] == 0 %}
+                <img src = "{{url_for('static', filename='a.jpg')}}"" alt = "First image">
+            {% else %}
+                <img src = "{{url_for('static', filename='b.jpg')}}"" alt = "First image">
+            {% endif %}
+        </center>
+    {% endif %}
+    <h1> Naman Jain Vimal Kumar </h1>
+    <h1> 1001670153 </h1>
+</body>
