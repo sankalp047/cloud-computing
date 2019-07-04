@@ -1,0 +1,221 @@
+
+Name: Naman Jain Vimal Kumar
+Last 4 digits ID: 0153
+Computer IP address:
+CSE 6331, Cloud Computing					
+
+
+Quiz Q7, 3.30, Summer 2019   (c) DL, UTA, 2019
+
+
+  C&P means cut and paste only those relevant lines from your program(s) into this quiz.
+
+
+ 1.  I understand that I am on my honor during this quiz, I will not collaborate, use 
+     non-allowed sources, and I will not discuss or share this quiz with anyone for the next 
+     12 hours.
+     You MAY: use Google to search, use previous source code, 
+     YOU MAY NOT use:
+     Email, Facebook, Hangouts, IM, chats, Skype or ANY other human connection.
+
+     This is a timed test. Late tests will have points deducted for being late.
+     Very late tests will not be graded.
+
+     When you are complete, with any part, please raise your hand, so we may visually inspect that part.
+
+     The second part of the test, you should electronically submit, you will need to copy and paste 
+     only those lines of code to implement that part of the test, usually a few (two to eight) lines of code. 
+     Place it immediately after the question.
+
+     Submit this Quiz (renamed) with code cut and pasted, ONLY text. DO NOT submit zips, binaries, libraries,
+     or anything other than text.
+
+     When any parts(questions) are complete complete, submit this test, you may make multiple submissions.
+
+     If you have computer, or other, problems, please raise your hand immediately.
+
+     If you understand and agree, please initial here:
+     _________________
+
+ 2. Get files from this same folder.
+   
+ 3. Name your program/submission with your name and last digits of your ID.
+
+ 4. Using the cloud services provider, all functionality possible should be implemented on that provider.
+    (Of course, displaying web pages through a browser and the user interface is "local")
+    The cloud service provider is AWS.
+
+ 4+ In order to give as many people the opportunity to demo in the last few minutes, you may only demo ONE Question in the
+    last 5 minutes of the quiz time or for the few minutes afterward. 
+
+ 4++ Please open one window for the load testing software and another (or more) for the interface to the cloud based application,
+     when needed. Some questions may also require that you open multiple different windows (or tabs) on DIFFERENT/SEPERATE browser
+     instances (locally).
+     You will need to use the files (data) associated with this quiz, for a list of classes and students, and associated information.
+  
+Show and submit code, when each part is complete, raise your hand and then show us:
+
+    You are asked to build a very minimal course registration system. It will (of course) be cloud based, on AWS.
+    Students will be allowed to enroll for up to 3 classes, as long as there is room (seats) in each requested class.
+    Only students who have already been accepted, whose names are on the student list, may enroll for classes.
+    Your interface will be of two different views: the first is the student view where she may enter her name and either view
+    the courses she is enrolled in OR enroll in a new course (if available). The second is the administrators view, who may see
+    how many students, and who the names are, for (in) any single (one) class. Classes are specified by a class number and section
+    number, some classes have more than one section. For security reasons, the student view and the administrator view must 
+    run on different instances and must be viewable in different browsers.
+ 
+ 5. Show us the student view. Show us instances running.
+
+def get_DbInstance():
+    mydb = mysql.connector.connect(
+        host = db['hostname'],
+        user = db['user'],
+        passwd = db['password'],
+        database = db['dbname'],
+        port = 3306
+    )
+    return mydb
+
+def add_enrollment(student_id, course_num, section_num):
+
+    # Find max enrollments for that class
+    q1 = "SELECT max FROM classes where course = " + str(course_num) + " and section = " + str(section_num)
+    max_count = search_query(q1)[0]['max']
+
+    # Find current number of students in that class 
+    q2 = "SELECT COUNT(*) AS count FROM enrollment WHERE course_num = " + str(course_num) + " and section_num = " + str(section_num)
+    cur_count = search_query(q2)[0]['count']
+
+    print(cur_count)
+    print(max_count)
+    # Add to enrollments
+    if(int(max_count) > int(cur_count)):
+        q3 = "INSERT INTO enrollment (course_num, section_num, student_id) VALUES (%s, %s, %s)"
+        val = (course_num, section_num, student_id)
+        mydb = get_DbInstance()
+        mycursor = mydb.cursor()
+        mycursor.execute(q3, val)
+        mydb.commit()
+        mydb.close()
+        return True
+    else:
+        return False
+
+def execute_query(query):
+    mydb = get_DbInstance()
+    mycursor = mydb.cursor()
+    mycursor.execute(query)
+    mydb.commit()
+    mydb.close()
+    return mycursor.fetchall()
+
+def search_query(query):
+    mydb = get_DbInstance()
+    mycursor = mydb.cursor()
+    mycursor.execute(query)
+    row_headers=[x[0] for x in mycursor.description] #this will extract row headers
+    rv = mycursor.fetchall()
+    json_data=[]
+    for result in rv:
+        json_data.append(dict(zip(row_headers,result)))
+    return json_data
+
+application = Flask(__name__)
+
+def view_index():
+    return render_template("index.html")
+
+def get_student_view():
+    fname = request.args.get("fname")
+    lname = request.args.get("lname")
+    return stud_view(fname, lname)
+
+def stud_view(fname, lname):
+    tables = []
+    
+    myDetails = search_query("SELECT * FROM students WHERE LOWER(Fname) LIKE '" + fname + "' AND LOWER(Lname) LIKE '" + lname + "'")
+    if len(myDetails) > 0:
+        tables.append({
+            "records": myDetails,
+            "title": "Student Details"
+        })
+    else:
+        return render_template('index.html', msg="Not a valid student") 
+
+    myEnrollments = search_query("SELECT * FROM classes as c "+
+                    "LEFT OUTER JOIN enrollment as e ON c.course = e.course_num AND c.section = e.section_num "+
+                    "LEFT OUTER JOIN students as s ON s.idNum = e.student_id "+
+                    "WHERE LOWER(s.Fname) LIKE '" + fname + "' AND LOWER(s.Lname) LIKE '" + lname + "'")
+    if len(myEnrollments) > 0:
+        tables.append({
+            "records": myEnrollments,
+            "title": "Student Enrollments"
+        })
+    
+    if len(myEnrollments) < 3:
+
+        addCourses = {
+            "records": search_query("SELECT * FROM classes"),
+            "title": "Add Enrollments",
+            "student_id": myDetails[0]['IdNum']
+        }
+    else:
+        addCourses = None
+
+    return render_template('index.html', tables = tables, addCourse = addCourses)
+    
+def get_enrollmentView():
+    student_id = request.args.get("student_id")
+    course_num = request.args.get("course")
+    section_num = request.args.get("section")
+    flag = add_enrollment(student_id, course_num, section_num)
+    if flag:
+        return render_template('index.html', msg = "Course Added")
+    else:
+        return render_template('index.html', msg="Class already full")
+
+ 6. Show us the administrators view. Show us instances running.
+
+
+def adminView():
+    tables = []
+    print("SELECT SELECT COUNT(*) as count, section_num, course_num From enrollment GROUP BY course_num, section_num")
+    count_enrollments = search_query("SELECT COUNT(*) as count, section_num, course_num From enrollment GROUP BY course_num, section_num")
+    if(len(count_enrollments)) > 0:
+        tables.append({
+            "records": count_enrollments,
+            "title": "Count Enrollments"
+        })
+    enrollments = search_query("SELECT * FROM enrollment as e "+
+                    "LEFT OUTER JOIN classes as c ON c.course = e.course_num AND c.section = e.section_num "+
+                    "LEFT OUTER JOIN students as s ON s.idNum = e.student_id ")
+    if(len(enrollments)) > 0:
+        tables.append({
+            "records": enrollments,
+            "title": "All Enrollments"
+        })
+    return render_template('admin.html', tables = tables)
+
+ 7. Show a web page (which resides on the cloud provider) with your name and student ID in large blue font at the top of 
+    the web page dispayed (for this quiz) 
+    Then show the time (actual time, not time used) and below that a counter which increases each time there is a page request.
+
+    Then, using your load test tool, test (simulate) multiple users who are using your cloud application. 
+    We will give you a number of users to simulate. 
+    Using "auto scaling", create multiple instances based on CPU utilization (set the threshold so that you will create multiple
+    instances), then when requests have decreased, show us scaling down.
+ 
+    Monitor (test) the cloud execution with your load test tool, capture, and explain results. 
+    Show us in a browser the web page, and also show us the number of instances.
+
+For auto scaling: Have used Network out with 60KB as upper limit and 30KB as lower limit
+
+Step1: go to APP > Configuration
+Step2: From standalone to load-balanced way
+Step3: Network out as paramters
+Step4: Apply those bonds
+Step5: Apply
+
+ 10. When complete, return (send) this quiz
+     If you finish early, send this immediately, otherwise send between
+     the end of class and no more than 1 minute after that.
